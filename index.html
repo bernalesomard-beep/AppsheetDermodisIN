@@ -216,7 +216,7 @@
         </div>
 
         <!-- Métricas OFERTAS (ocultas por defecto) -->
-        <div id="card-metricas-ofertas" style="display:none">
+        <div id="card-metricas-ofertas" style="display:none;">
           <div class="grid grid-cols-3 gap-2 border-y border-outline-variant/30 py-3">
             <div class="text-center">
               <p class="text-[10px] font-bold text-on-surface-variant uppercase">TOTAL DOCS</p>
@@ -707,39 +707,60 @@ function renderOfertas(data) {
 }
 
 // ============================================================
-// ACTUALIZAR DASHBOARD CARDS
+// ESTADO DEL TAB ACTIVO
 // ============================================================
-function updateDashboard() {
-  // --- Hoja 1+2: Importación + CL combinados ---
-  const todos = [...dataIMP, ...dataCL];
-  const total = todos.reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const completado = todos.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'COMPLETADO').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const proceso    = todos.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'EN PROCESO').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const pendiente  = todos.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'PENDIENTE').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const trabajado  = completado + proceso;
-  const pct = total > 0 ? Math.round((trabajado / total) * 100) : 0;
+let activeTab = 'importacion';
 
-  // Card resumen
-  const refSample = dataIMP[0]?.['REFERENTE'] || dataCL[0]?.['REFERENTE'] || '—';
-  const docSample = dataIMP[0]?.['DOCUMENTO'] || dataCL[0]?.['DOCUMENTO'] || '—';
-  document.getElementById('res-referente').textContent = refSample;
-  document.getElementById('res-documento').textContent = 'Doc: ' + docSample;
+// ============================================================
+// HELPER: calcular bultos y palets de hoja 3 por tipo
+// ============================================================
+function calcBultosPalets(tipoFiltro) {
+  let bultos = 0, palets = 0;
+  dataH3.forEach(r => {
+    const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim();
+    const b = parseFloat(r['BULTOS']) || 0;
+    const p = parseFloat(r['PALET'])  || 0;
+    if (tipoFiltro === 'IMP' && (tipo === 'IMPORTACION' || tipo === 'IMPORTACIÓN')) { bultos += b; palets += p; }
+    else if (tipoFiltro === 'CL' && tipo === 'COMPRA LOCAL') { bultos += b; palets += p; }
+  });
+  return { bultos, palets };
+}
+
+// ============================================================
+// HELPER: card izquierda para IMPORTACIÓN o COMPRA LOCAL
+// ============================================================
+function updateCardInbound(data, titulo, tipoBultos) {
+  const total      = data.reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
+  const completado = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'COMPLETADO').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
+  const proceso    = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'EN PROCESO').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
+  const pendiente  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'PENDIENTE').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
+  const trabajado  = completado + proceso;
+  const pct        = total > 0 ? Math.round((trabajado / total) * 100) : 0;
+  const { bultos, palets } = calcBultosPalets(tipoBultos);
+
+  document.getElementById('card-metricas-inbound').style.display = '';
+  document.getElementById('card-metricas-ofertas').style.display = 'none';
+  document.getElementById('card-titulo').textContent = titulo;
+  document.getElementById('res-referente').textContent = data[0]?.['REFERENTE'] || '—';
+  document.getElementById('res-documento').textContent = 'Doc: ' + (data[0]?.['DOCUMENTO'] || '—');
   document.getElementById('res-pct').textContent = pct + '%';
   document.getElementById('res-total').textContent = total.toLocaleString('es-PE');
   document.getElementById('res-trabajado').textContent = Math.round(trabajado).toLocaleString('es-PE');
   document.getElementById('res-pendiente').textContent = Math.round(pendiente).toLocaleString('es-PE');
+  document.getElementById('res-bultos').textContent = bultos.toLocaleString('es-PE');
+  document.getElementById('res-palets').textContent = palets.toLocaleString('es-PE');
+  document.getElementById('res-registros').textContent = data.length.toLocaleString('es-PE');
 
-  // Estado dominante
-  const estadoBadge = pct >= 80 ? 'COMPLETADO' : pct >= 40 ? 'EN PROCESO' : 'PENDIENTE';
+  const estado = pct >= 80 ? 'COMPLETADO' : pct >= 40 ? 'EN PROCESO' : 'PENDIENTE';
   const badgeEl = document.getElementById('res-estado-badge');
-  badgeEl.textContent = estadoBadge;
-  badgeEl.className = estadoBadge === 'COMPLETADO'
+  badgeEl.textContent = estado;
+  badgeEl.className = estado === 'COMPLETADO'
     ? 'px-2 py-0.5 bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant rounded text-[10px] font-bold uppercase'
-    : estadoBadge === 'EN PROCESO'
+    : estado === 'EN PROCESO'
     ? 'px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded text-[10px] font-bold uppercase'
     : 'px-2 py-0.5 bg-[#EAB308]/20 text-[#854D0E] rounded text-[10px] font-bold uppercase';
 
-  // Donut
+  document.getElementById('donut-titulo').textContent = 'Distribución — ' + titulo;
   document.getElementById('donut-pct').textContent = pct + '%';
   document.getElementById('donut-completado').textContent = Math.round(completado).toLocaleString('es-PE');
   document.getElementById('donut-completado-pct').textContent = total > 0 ? Math.round((completado/total)*100) + '%' : '0%';
@@ -748,38 +769,63 @@ function updateDashboard() {
   document.getElementById('donut-pendiente').textContent = Math.round(pendiente).toLocaleString('es-PE');
   document.getElementById('donut-pendiente-pct').textContent = total > 0 ? Math.round((pendiente/total)*100) + '%' : '0%';
   drawDonut(completado, proceso, pendiente, total);
+}
 
-  // --- Hoja 3: Bultos y Palets ---
-  let impBultos = 0, impPalets = 0, clBultos = 0, clPalets = 0;
-  dataH3.forEach(r => {
-    const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim();
-    const b = parseFloat(r['BULTOS']) || 0;
-    const p = parseFloat(r['PALET'])  || 0;
-    if (tipo === 'IMPORTACION' || tipo === 'IMPORTACIÓN') { impBultos += b; impPalets += p; }
-    else if (tipo === 'COMPRA LOCAL') { clBultos += b; clPalets += p; }
-  });
-  document.getElementById('res-bultos').textContent = (impBultos + clBultos).toLocaleString('es-PE');
-  document.getElementById('res-palets').textContent = (impPalets + clPalets).toLocaleString('es-PE');
-  document.getElementById('h3-imp-bultos').textContent = impBultos.toLocaleString('es-PE');
-  document.getElementById('h3-imp-palets').textContent = impPalets.toLocaleString('es-PE');
-  document.getElementById('h3-cl-bultos').textContent = clBultos.toLocaleString('es-PE');
-  document.getElementById('h3-cl-palets').textContent = clPalets.toLocaleString('es-PE');
-  document.getElementById('h3-total-bultos').textContent = (impBultos + clBultos).toLocaleString('es-PE');
-  document.getElementById('h3-total-palets').textContent = (impPalets + clPalets).toLocaleString('es-PE');
+// ============================================================
+// HELPER: card izquierda para ARMADO DE OFERTAS
+// ============================================================
+function updateCardOfertas() {
+  const data    = dataOF;
+  const ofTotal = data.length;
+  const ofComp  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'COMPLETADO').length;
+  const ofProc  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'EN PROCESO').length;
+  const ofPend  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'PENDIENTE').length;
+  const ofErr   = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'ERROR VALIDAR').length;
+  const ofStock = data.reduce((s, r) => s + (parseFloat(r['STOCK']) || 0), 0);
+  const meses   = [...new Set(data.map(r => r['MES'] || '').filter(Boolean))];
+  const pct     = ofTotal > 0 ? Math.round((ofComp / ofTotal) * 100) : 0;
 
-  // --- Hoja 2: Resumen Ofertas ---
-  const ofTotal = dataOF.length;
-  const ofComp  = dataOF.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'COMPLETADO').length;
-  const ofPend  = dataOF.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'PENDIENTE').length;
-  const ofErr   = dataOF.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'ERROR VALIDAR').length;
-  const ofStock = dataOF.reduce((s, r) => s + (parseFloat(r['STOCK']) || 0), 0);
-  const meses = [...new Set(dataOF.map(r => r['MES'] || '').filter(Boolean))];
-  document.getElementById('of-mes-label').textContent = meses.length ? meses.join(', ') : '—';
-  document.getElementById('of-total-docs').textContent = ofTotal.toLocaleString('es-PE');
+  document.getElementById('card-metricas-inbound').style.display = 'none';
+  document.getElementById('card-metricas-ofertas').style.display = '';
+  document.getElementById('card-titulo').textContent = 'ARMADO DE OFERTAS';
+  document.getElementById('res-referente').textContent = meses.length ? 'Meses: ' + meses.join(', ') : '—';
+  document.getElementById('res-documento').textContent = ofTotal + ' documentos registrados';
+  document.getElementById('res-pct').textContent = pct + '%';
+
+  const estado = pct >= 80 ? 'COMPLETADO' : pct >= 40 ? 'EN PROCESO' : 'PENDIENTE';
+  const badgeEl = document.getElementById('res-estado-badge');
+  badgeEl.textContent = estado;
+  badgeEl.className = estado === 'COMPLETADO'
+    ? 'px-2 py-0.5 bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant rounded text-[10px] font-bold uppercase'
+    : estado === 'EN PROCESO'
+    ? 'px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded text-[10px] font-bold uppercase'
+    : 'px-2 py-0.5 bg-[#EAB308]/20 text-[#854D0E] rounded text-[10px] font-bold uppercase';
+
+  document.getElementById('of-total-docs').textContent  = ofTotal.toLocaleString('es-PE');
   document.getElementById('of-completados').textContent = ofComp.toLocaleString('es-PE');
-  document.getElementById('of-pendientes').textContent = ofPend.toLocaleString('es-PE');
-  document.getElementById('of-stock').textContent = Math.round(ofStock).toLocaleString('es-PE');
-  document.getElementById('of-errores').textContent = ofErr.toLocaleString('es-PE');
+  document.getElementById('of-pendientes').textContent  = ofPend.toLocaleString('es-PE');
+  document.getElementById('of-stock').textContent       = Math.round(ofStock).toLocaleString('es-PE');
+  document.getElementById('of-errores').textContent     = ofErr.toLocaleString('es-PE');
+  document.getElementById('of-mes-label').textContent   = meses.length ? meses.length + ' mes(es)' : '—';
+
+  document.getElementById('donut-titulo').textContent = 'Distribución — Ofertas';
+  document.getElementById('donut-pct').textContent = pct + '%';
+  document.getElementById('donut-completado').textContent = ofComp.toLocaleString('es-PE');
+  document.getElementById('donut-completado-pct').textContent = ofTotal > 0 ? Math.round((ofComp/ofTotal)*100) + '%' : '0%';
+  document.getElementById('donut-proceso').textContent = ofProc.toLocaleString('es-PE');
+  document.getElementById('donut-proceso-pct').textContent = ofTotal > 0 ? Math.round((ofProc/ofTotal)*100) + '%' : '0%';
+  document.getElementById('donut-pendiente').textContent = ofPend.toLocaleString('es-PE');
+  document.getElementById('donut-pendiente-pct').textContent = ofTotal > 0 ? Math.round((ofPend/ofTotal)*100) + '%' : '0%';
+  drawDonut(ofComp, ofProc, ofPend, ofTotal);
+}
+
+// ============================================================
+// ACTUALIZAR DASHBOARD CARDS — delega según tab activo
+// ============================================================
+function updateDashboard() {
+  if (activeTab === 'importacion')         updateCardInbound(dataIMP, 'IMPORTACIÓN',   'IMP');
+  else if (activeTab === 'compra-local')   updateCardInbound(dataCL,  'COMPRA LOCAL',  'CL');
+  else if (activeTab === 'armado-ofertas') updateCardOfertas();
 }
 
 // ============================================================
@@ -934,60 +980,90 @@ async function loadAllData() {
   });
   document.getElementById('tbody-of').innerHTML = '<tr class="loading-row"><td colspan="13"><span class="material-symbols-outlined spin">sync</span> Cargando desde Google Sheets...</td></tr>';
 
-  try {
-    // Cargar las 3 hojas en paralelo
-    const [textInbound, textOfertas, textResumen] = await Promise.all([
-      fetchCSV(URL_INBOUND),
-      fetchCSV(URL_OFERTAS),
-      fetchCSV(URL_RESUMEN)
-    ]);
+  // Cargar cada hoja de forma independiente para que un fallo no bloquee las demás
+  const results = await Promise.allSettled([
+    fetchCSV(URL_INBOUND),
+    fetchCSV(URL_OFERTAS),
+    fetchCSV(URL_RESUMEN)
+  ]);
 
-    // Hoja 1: Inbound → separar IMP y CL por columna TIPO
-    const inbObj = parseCSV(textInbound);
-    const allInbound = toObjects(inbObj.headers, inbObj.rows);
-    dataIMP = allInbound.filter(r => (r['TIPO'] || '').toUpperCase().trim() === 'IMP');
-    dataCL  = allInbound.filter(r => (r['TIPO'] || '').toUpperCase().trim() === 'CL');
+  let hayError = false;
 
-    // Hoja 2: Ofertas
-    const ofObj = parseCSV(textOfertas);
-    dataOF = toObjects(ofObj.headers, ofObj.rows);
-
-    // Hoja 3: Resumen bultos/palets
-    const h3Obj = parseCSV(textResumen);
-    dataH3 = toObjects(h3Obj.headers, h3Obj.rows);
-
-    // Poblar selects de mes
-    populateMesSelect(dataIMP, 'imp-filter-mes');
-    populateMesSelect(dataCL,  'cl-filter-mes');
-    populateMesSelect(dataOF,  'of-filter-mes');
-
-    // Renderizar tablas
-    renderInbound(dataIMP, 'tbody-imp', 'imp-count');
-    renderInbound(dataCL,  'tbody-cl',  'cl-count');
-    renderOfertas(dataOF);
-
-    // Actualizar dashboard
-    updateDashboard();
-
-    const now = new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-    document.getElementById('last-update-label').textContent = 'Actualizado: ' + now;
-
-  } catch(e) {
-    console.error('Error cargando datos:', e);
+  // Hoja 1: Inbound
+  if (results[0].status === 'fulfilled') {
+    try {
+      const inbObj = parseCSV(results[0].value);
+      const allInbound = toObjects(inbObj.headers, inbObj.rows);
+      dataIMP = allInbound.filter(r => (r['TIPO'] || '').toUpperCase().trim() === 'IMP');
+      dataCL  = allInbound.filter(r => (r['TIPO'] || '').toUpperCase().trim() === 'CL');
+      populateMesSelect(dataIMP, 'imp-filter-mes');
+      populateMesSelect(dataCL,  'cl-filter-mes');
+      renderInbound(dataIMP, 'tbody-imp', 'imp-count');
+      renderInbound(dataCL,  'tbody-cl',  'cl-count');
+    } catch(e) {
+      console.error('Error procesando Inbound:', e);
+      ['tbody-imp','tbody-cl'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<tr class="error-row"><td colspan="14">Error al procesar datos: ${e.message}</td></tr>`;
+      });
+      hayError = true;
+    }
+  } else {
     ['tbody-imp','tbody-cl'].forEach(id => {
-      document.getElementById(id).innerHTML = `<tr class="error-row"><td colspan="14">Error al cargar: ${e.message}. Verifica que los sheets sean públicos.</td></tr>`;
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<tr class="error-row"><td colspan="14">Error al cargar hoja Inbound. Verifica que el sheet sea público.</td></tr>`;
     });
-    document.getElementById('tbody-of').innerHTML = `<tr class="error-row"><td colspan="13">Error al cargar: ${e.message}</td></tr>`;
-    document.getElementById('last-update-label').textContent = 'Error al cargar';
+    hayError = true;
   }
+
+  // Hoja 2: Ofertas
+  if (results[1].status === 'fulfilled') {
+    try {
+      const ofObj = parseCSV(results[1].value);
+      dataOF = toObjects(ofObj.headers, ofObj.rows);
+      populateMesSelect(dataOF, 'of-filter-mes');
+      renderOfertas(dataOF);
+    } catch(e) {
+      console.error('Error procesando Ofertas:', e);
+      const el = document.getElementById('tbody-of');
+      if (el) el.innerHTML = `<tr class="error-row"><td colspan="13">Error al procesar datos de ofertas: ${e.message}</td></tr>`;
+      hayError = true;
+    }
+  } else {
+    const el = document.getElementById('tbody-of');
+    if (el) el.innerHTML = `<tr class="error-row"><td colspan="13">Error al cargar hoja Ofertas. Verifica que el sheet sea público.</td></tr>`;
+    hayError = true;
+  }
+
+  // Hoja 3: Resumen bultos/palets (no bloquea el resto si falla)
+  if (results[2].status === 'fulfilled') {
+    try {
+      const h3Obj = parseCSV(results[2].value);
+      dataH3 = toObjects(h3Obj.headers, h3Obj.rows);
+    } catch(e) {
+      console.warn('Error procesando Resumen (bultos/palets):', e);
+      dataH3 = [];
+    }
+  } else {
+    console.warn('No se pudo cargar hoja Resumen:', results[2].reason);
+    dataH3 = [];
+  }
+
+  // Actualizar dashboard con lo que se pudo cargar
+  try { updateDashboard(); } catch(e) { console.error('Error en updateDashboard:', e); }
+
+  const now = new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const lbl = document.getElementById('last-update-label');
+  if (lbl) lbl.textContent = hayError ? 'Actualizado con errores: ' + now : 'Actualizado: ' + now;
 
   document.getElementById('refresh-icon').classList.remove('spin');
 }
 
 // ============================================================
-// TAB SWITCHING
+// TAB SWITCHING — actualiza cards al cambiar tab
 // ============================================================
 function switchTab(tabId) {
+  activeTab = tabId;
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => {
     b.classList.remove('border-primary','text-primary','bg-surface-container-lowest','-mb-[1px]');
@@ -997,6 +1073,14 @@ function switchTab(tabId) {
   const btn = document.getElementById('btn-' + tabId);
   btn.classList.add('border-primary','text-primary','bg-surface-container-lowest','-mb-[1px]');
   btn.classList.remove('border-transparent','text-on-surface-variant');
+
+  // Fade suave en las cards de resumen al cambiar tab
+  const summaryCards = document.querySelectorAll('#card-resumen, #card-resumen + div');
+  summaryCards.forEach(c => { c.style.transition = 'opacity 0.15s ease'; c.style.opacity = '0'; });
+  setTimeout(() => {
+    updateDashboard();
+    summaryCards.forEach(c => { c.style.opacity = '1'; });
+  }, 150);
 }
 
 // Row selection micro-interaction
