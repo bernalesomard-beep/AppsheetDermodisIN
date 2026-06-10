@@ -714,15 +714,38 @@ let activeTab = 'importacion';
 // ============================================================
 // HELPER: calcular bultos y palets de hoja 3 por tipo
 // ============================================================
-function calcBultosPalets(tipoFiltro) {
+function calcBultosPalets(tipoFiltro, dataFiltrada) {
   let bultos = 0, palets = 0;
-  dataH3.forEach(r => {
-    const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim();
-    const b = parseFloat(r['BULTOS']) || 0;
-    const p = parseFloat(r['PALET'])  || 0;
-    if (tipoFiltro === 'IMP' && (tipo === 'IMPORTACION' || tipo === 'IMPORTACIÓN')) { bultos += b; palets += p; }
-    else if (tipoFiltro === 'CL' && tipo === 'COMPRA LOCAL') { bultos += b; palets += p; }
-  });
+  if (dataFiltrada && dataFiltrada.length > 0) {
+    const docsUnicos = new Set(dataFiltrada.map(r => (r['DOCUMENTO'] || '').trim().toLowerCase()).filter(Boolean));
+    const refsUnicas = new Set(dataFiltrada.map(r => (r['REFERENTE'] || '').trim().toLowerCase()).filter(Boolean));
+    dataH3.forEach(r => {
+      const docGuia   = (r['DOC, GUIA']   || '').trim().toLowerCase();
+      const referencia = (r['REFERENCIA'] || '').trim().toLowerCase();
+      const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const b = parseFloat(r['BULTOS']) || 0;
+      const p = parseFloat(r['PALET'])  || 0;
+      const tipoOk = tipoFiltro === 'IMP' ? tipo.includes('IMPORT')
+                   : (tipo.includes('COMPRA') || tipo.includes('LOCAL'));
+      if (!tipoOk) return;
+      // Prioridad 1: cruzar por DOC, GUIA si hay documentos filtrados
+      if (docsUnicos.size > 0 && docGuia && docsUnicos.has(docGuia)) { bultos += b; palets += p; return; }
+      // Prioridad 2: cruzar por REFERENCIA si no hay filtro de documento pero sí de referente
+      if (docsUnicos.size === 0 && refsUnicas.size > 0 && referencia && refsUnicas.has(referencia)) { bultos += b; palets += p; return; }
+      // Sin ningún filtro activo: suma todo por tipo
+      if (docsUnicos.size === 0 && refsUnicas.size === 0) { bultos += b; palets += p; }
+    });
+  } else {
+    dataH3.forEach(r => {
+      const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const b = parseFloat(r['BULTOS']) || 0;
+      const p = parseFloat(r['PALET'])  || 0;
+      if (tipoFiltro === 'IMP' && tipo.includes('IMPORT')) { bultos += b; palets += p; }
+      else if (tipoFiltro === 'CL' && (tipo.includes('COMPRA') || tipo.includes('LOCAL'))) { bultos += b; palets += p; }
+    });
+  }
   return { bultos, palets };
 }
 
@@ -736,7 +759,7 @@ function updateCardInbound(data, titulo, tipoBultos) {
   const pendiente  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'PENDIENTE').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
   const trabajado  = completado + proceso;
   const pct        = total > 0 ? Math.round((trabajado / total) * 100) : 0;
-  const { bultos, palets } = calcBultosPalets(tipoBultos);
+  const { bultos, palets } = calcBultosPalets(tipoBultos, data);
 
   document.getElementById('card-metricas-inbound').style.display = '';
   document.getElementById('card-metricas-ofertas').style.display = 'none';
@@ -893,6 +916,7 @@ function applyFiltersImp() {
   if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
   if (obs)  d = d.filter(r => (r['OBSERVACION'] || '').toLowerCase().includes(obs));
   renderInbound(d, 'tbody-imp', 'imp-count');
+  updateCardInbound(d, 'IMPORTACIÓN', 'IMP');
 }
 function clearFiltersImp() {
   ['imp-filter-mes','imp-filter-doc','imp-filter-ref','imp-filter-prod','imp-filter-obs'].forEach(id => {
@@ -900,6 +924,7 @@ function clearFiltersImp() {
     if (el) el.value = '';
   });
   renderInbound(dataIMP, 'tbody-imp', 'imp-count');
+  updateCardInbound(dataIMP, 'IMPORTACIÓN', 'IMP');
 }
 
 // ============================================================
@@ -918,6 +943,7 @@ function applyFiltersCL() {
   if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
   if (obs)  d = d.filter(r => (r['OBSERVACION'] || '').toLowerCase().includes(obs));
   renderInbound(d, 'tbody-cl', 'cl-count');
+  updateCardInbound(d, 'COMPRA LOCAL', 'CL');
 }
 function clearFiltersCL() {
   ['cl-filter-mes','cl-filter-doc','cl-filter-ref','cl-filter-prod','cl-filter-obs'].forEach(id => {
@@ -925,6 +951,7 @@ function clearFiltersCL() {
     if (el) el.value = '';
   });
   renderInbound(dataCL, 'tbody-cl', 'cl-count');
+  updateCardInbound(dataCL, 'COMPRA LOCAL', 'CL');
 }
 
 // ============================================================
