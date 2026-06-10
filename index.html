@@ -223,21 +223,21 @@
         <div id="card-metricas-ofertas" style="display:none;">
           <div class="grid grid-cols-3 gap-2 border-y border-outline-variant/30 py-3">
             <div class="text-center">
-              <p class="text-[10px] font-bold text-on-surface-variant uppercase">TOTAL DOCS</p>
+              <p class="text-[10px] font-bold text-on-surface-variant uppercase">TOTAL UNID.</p>
               <p class="text-headline-sm text-on-surface" id="of-total-docs">—</p>
             </div>
             <div class="text-center border-x border-outline-variant/30">
-              <p class="text-[10px] font-bold text-on-surface-variant uppercase">COMPLETADOS</p>
+              <p class="text-[10px] font-bold text-on-surface-variant uppercase">TRABAJADO</p>
               <p class="text-headline-sm text-on-tertiary-container" id="of-completados">—</p>
             </div>
             <div class="text-center">
-              <p class="text-[10px] font-bold text-on-surface-variant uppercase">PENDIENTES</p>
-              <p class="text-headline-sm text-[#854D0E]" id="of-pendientes">—</p>
+              <p class="text-[10px] font-bold text-on-surface-variant uppercase">PENDIENTE</p>
+              <p class="text-headline-sm text-primary" id="of-pendientes">—</p>
             </div>
           </div>
           <div class="flex gap-4 mt-3">
             <div class="flex-1 bg-surface-container-low rounded p-2 flex flex-col items-center">
-              <p class="text-[9px] font-bold text-on-surface-variant uppercase">STOCK TOTAL</p>
+              <p class="text-[9px] font-bold text-on-surface-variant uppercase">STOCK PEND.</p>
               <p class="text-headline-sm text-on-surface" id="of-stock">—</p>
             </div>
             <div class="flex-1 bg-surface-container-low rounded p-2 flex flex-col items-center">
@@ -870,20 +870,18 @@ function updateCardInbound(data, titulo, tipoBultos) {
 // ============================================================
 function updateCardOfertas(data) {
   if (!data) data = filteredOF.length ? filteredOF : dataOF;
-  const ofTotal = data.length;
-  const ofComp  = data.filter(r => calcObs(r) === 'COMPLETADO').length;
-  const ofProc  = data.filter(r => calcObs(r) === 'EN PROCESO').length;
-  const ofPend  = data.filter(r => calcObs(r) === 'PENDIENTE').length;
-  const ofErr   = data.filter(r => calcObs(r) === 'ERROR').length;
-  const ofStock = data.reduce((s, r) => s + (parseFloat(r['STOCK']) || 0), 0);
-  const meses   = [...new Set(data.map(r => r['MES'] || '').filter(Boolean))];
-  const pct     = ofTotal > 0 ? Math.round((ofComp / ofTotal) * 100) : 0;
+  const totalUnid = data.reduce((s, r) => s + (parseFloat(r['TOTAL']) || 0), 0);
+  const pendiente = data.reduce((s, r) => s + Math.max(0, parseFloat(r['STOCK']) || 0), 0);
+  const trabajado = Math.max(0, totalUnid - pendiente);
+  const pct       = totalUnid > 0 ? Math.round((trabajado / totalUnid) * 100) : 0;
+  const ofErr     = data.filter(r => calcObs(r) === 'ERROR').length;
+  const meses     = [...new Set(data.map(r => r['MES'] || '').filter(Boolean))];
 
   document.getElementById('card-metricas-inbound').style.display = 'none';
   document.getElementById('card-metricas-ofertas').style.display = '';
   document.getElementById('card-titulo').textContent = 'ARMADO DE OFERTAS';
   document.getElementById('res-referente').textContent = meses.length ? 'Meses: ' + meses.join(', ') : '—';
-  document.getElementById('res-documento').textContent = ofTotal + ' documentos registrados';
+  document.getElementById('res-documento').textContent = data.length + ' registros';
   document.getElementById('res-pct').textContent = pct + '%';
 
   const estado = pct >= 80 ? 'COMPLETADO' : pct >= 40 ? 'EN PROCESO' : 'PENDIENTE';
@@ -895,22 +893,23 @@ function updateCardOfertas(data) {
     ? 'px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded text-[10px] font-bold uppercase'
     : 'px-2 py-0.5 bg-[#EAB308]/20 text-[#854D0E] rounded text-[10px] font-bold uppercase';
 
-  document.getElementById('of-total-docs').textContent  = ofTotal.toLocaleString('es-PE');
-  document.getElementById('of-completados').textContent = ofComp.toLocaleString('es-PE');
-  document.getElementById('of-pendientes').textContent  = ofPend.toLocaleString('es-PE');
-  document.getElementById('of-stock').textContent       = Math.round(ofStock).toLocaleString('es-PE');
+  // Reusar las mismas métricas visuales que inbound (total / trabajado / pendiente)
+  document.getElementById('of-total-docs').textContent  = Math.round(totalUnid).toLocaleString('es-PE');
+  document.getElementById('of-completados').textContent = Math.round(trabajado).toLocaleString('es-PE');
+  document.getElementById('of-pendientes').textContent  = Math.round(pendiente).toLocaleString('es-PE');
+  document.getElementById('of-stock').textContent       = Math.round(pendiente).toLocaleString('es-PE');
   document.getElementById('of-errores').textContent     = ofErr.toLocaleString('es-PE');
   document.getElementById('of-mes-label').textContent   = meses.length ? meses.length + ' mes(es)' : '—';
 
   document.getElementById('donut-titulo').textContent = 'Distribución — Ofertas';
   document.getElementById('donut-pct').textContent = pct + '%';
-  document.getElementById('donut-completado').textContent = ofComp.toLocaleString('es-PE');
-  document.getElementById('donut-completado-pct').textContent = ofTotal > 0 ? Math.round((ofComp/ofTotal)*100) + '%' : '0%';
-  document.getElementById('donut-proceso').textContent = ofProc.toLocaleString('es-PE');
-  document.getElementById('donut-proceso-pct').textContent = ofTotal > 0 ? Math.round((ofProc/ofTotal)*100) + '%' : '0%';
-  document.getElementById('donut-pendiente').textContent = ofPend.toLocaleString('es-PE');
-  document.getElementById('donut-pendiente-pct').textContent = ofTotal > 0 ? Math.round((ofPend/ofTotal)*100) + '%' : '0%';
-  drawDonut(ofComp, ofProc, ofPend, ofTotal);
+  document.getElementById('donut-completado').textContent = Math.round(trabajado).toLocaleString('es-PE');
+  document.getElementById('donut-completado-pct').textContent = totalUnid > 0 ? Math.round((trabajado/totalUnid)*100) + '%' : '0%';
+  document.getElementById('donut-proceso').textContent = '—';
+  document.getElementById('donut-proceso-pct').textContent = '';
+  document.getElementById('donut-pendiente').textContent = Math.round(pendiente).toLocaleString('es-PE');
+  document.getElementById('donut-pendiente-pct').textContent = totalUnid > 0 ? Math.round((pendiente/totalUnid)*100) + '%' : '0%';
+  drawDonut(trabajado, 0, pendiente, totalUnid);
 }
 
 // ============================================================
