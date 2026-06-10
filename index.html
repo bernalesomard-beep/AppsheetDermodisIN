@@ -18,6 +18,10 @@
   .spin { animation: spin 1s linear infinite; display: inline-block; }
   .loading-row td { text-align:center; padding:2rem; color:#74777f; }
   .error-row td { text-align:center; padding:2rem; color:#ba1a1a; }
+  .row-checkbox { accent-color: #002046; width:15px; height:15px; cursor:pointer; }
+  tr.row-selected { background-color: rgba(0,32,70,0.06) !important; border-left-color: #002046 !important; }
+  .sel-bar { display:none; align-items:center; gap:10px; padding:6px 16px; background:#002046; color:#fff; font-size:12px; font-weight:700; border-radius:4px; }
+  .sel-bar.visible { display:flex; }
 </style>
 <script id="tailwind-config">
   tailwind.config = {
@@ -334,10 +338,29 @@
             <span class="text-label-caps font-label-caps">EXPORTAR</span>
           </button>
         </div>
+        <!-- Barra de estado: contador + selección -->
+        <div class="px-4 py-2 bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between gap-4 flex-wrap">
+          <span class="text-body-sm text-on-surface-variant" id="imp-count-top">—</span>
+          <div class="flex items-center gap-3">
+            <div class="sel-bar" id="imp-sel-bar">
+              <span class="material-symbols-outlined text-[16px]">check_box</span>
+              <span id="imp-sel-count">0 seleccionados</span>
+              <button onclick="exportSelected('imp')" class="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition-colors">
+                <span class="material-symbols-outlined text-[14px]">download</span> Exportar selección
+              </button>
+              <button onclick="clearSelection('imp')" class="flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors">
+                <span class="material-symbols-outlined text-[14px]">close</span>
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
           <table class="w-full text-left border-collapse table-auto min-w-[1400px]">
             <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
               <tr>
+                <th class="px-3 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap w-8">
+                  <input type="checkbox" class="row-checkbox" id="imp-check-all" title="Seleccionar todos" onchange="toggleSelectAll('imp', this.checked)">
+                </th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">MES</th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">ORD</th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">REFERENTE</th>
@@ -355,7 +378,7 @@
               </tr>
             </thead>
             <tbody id="tbody-imp" class="text-body-sm divide-y divide-outline-variant">
-              <tr class="loading-row"><td colspan="14"><span class="material-symbols-outlined spin">sync</span> Cargando datos...</td></tr>
+              <tr class="loading-row"><td colspan="15"><span class="material-symbols-outlined spin">sync</span> Cargando datos...</td></tr>
             </tbody>
           </table>
         </div>
@@ -409,10 +432,29 @@
             <span class="text-label-caps font-label-caps">EXPORTAR</span>
           </button>
         </div>
+        <!-- Barra de estado: contador + selección -->
+        <div class="px-4 py-2 bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between gap-4 flex-wrap">
+          <span class="text-body-sm text-on-surface-variant" id="cl-count-top">—</span>
+          <div class="flex items-center gap-3">
+            <div class="sel-bar" id="cl-sel-bar">
+              <span class="material-symbols-outlined text-[16px]">check_box</span>
+              <span id="cl-sel-count">0 seleccionados</span>
+              <button onclick="exportSelected('cl')" class="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition-colors">
+                <span class="material-symbols-outlined text-[14px]">download</span> Exportar selección
+              </button>
+              <button onclick="clearSelection('cl')" class="flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors">
+                <span class="material-symbols-outlined text-[14px]">close</span>
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
           <table class="w-full text-left border-collapse table-auto min-w-[1400px]">
             <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
               <tr>
+                <th class="px-3 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap w-8">
+                  <input type="checkbox" class="row-checkbox" id="cl-check-all" title="Seleccionar todos" onchange="toggleSelectAll('cl', this.checked)">
+                </th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">MES</th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">ORD</th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">REFERENTE</th>
@@ -430,7 +472,7 @@
               </tr>
             </thead>
             <tbody id="tbody-cl" class="text-body-sm divide-y divide-outline-variant">
-              <tr class="loading-row"><td colspan="14"><span class="material-symbols-outlined spin">sync</span> Cargando datos...</td></tr>
+              <tr class="loading-row"><td colspan="15"><span class="material-symbols-outlined spin">sync</span> Cargando datos...</td></tr>
             </tbody>
           </table>
         </div>
@@ -477,10 +519,29 @@
             <span class="text-label-caps font-label-caps">EXPORTAR</span>
           </button>
         </div>
+        <!-- Barra de estado: contador + selección -->
+        <div class="px-4 py-2 bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between gap-4 flex-wrap">
+          <span class="text-body-sm text-on-surface-variant" id="of-count-top">—</span>
+          <div class="flex items-center gap-3">
+            <div class="sel-bar" id="of-sel-bar">
+              <span class="material-symbols-outlined text-[16px]">check_box</span>
+              <span id="of-sel-count">0 seleccionados</span>
+              <button onclick="exportSelected('of')" class="flex items-center gap-1 bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition-colors">
+                <span class="material-symbols-outlined text-[14px]">download</span> Exportar selección
+              </button>
+              <button onclick="clearSelection('of')" class="flex items-center gap-1 bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors">
+                <span class="material-symbols-outlined text-[14px]">close</span>
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
           <table class="w-full text-left border-collapse table-auto min-w-[900px]">
             <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
               <tr>
+                <th class="px-3 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap w-8">
+                  <input type="checkbox" class="row-checkbox" id="of-check-all" title="Seleccionar todos" onchange="toggleSelectAll('of', this.checked)">
+                </th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">MES</th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">INGRESO</th>
                 <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">DOCUMENTO</th>
@@ -497,7 +558,7 @@
               </tr>
             </thead>
             <tbody id="tbody-of" class="text-body-sm divide-y divide-outline-variant">
-              <tr class="loading-row"><td colspan="13"><span class="material-symbols-outlined spin">sync</span> Cargando datos...</td></tr>
+              <tr class="loading-row"><td colspan="14"><span class="material-symbols-outlined spin">sync</span> Cargando datos...</td></tr>
             </tbody>
           </table>
         </div>
@@ -610,15 +671,18 @@ function renderInbound(data, tbodyId, countId) {
   // Guardar referencia a datos filtrados para exportar
   if (tbodyId === 'tbody-imp') filteredIMP = data;
   else if (tbodyId === 'tbody-cl') filteredCL = data;
+  const prefix = tbodyId === 'tbody-imp' ? 'imp' : 'cl';
   const tbody = document.getElementById(tbodyId);
   const countEl = document.getElementById(countId);
+  const countTopEl = document.getElementById(prefix + '-count-top');
   if (!data.length) {
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="14">Sin registros.</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="15">Sin registros.</td></tr>';
     if (countEl) countEl.textContent = '0 registros';
+    if (countTopEl) countTopEl.textContent = '0 registros';
     return;
   }
   let html = '';
-  data.forEach(row => {
+  data.forEach((row, idx) => {
     // detectar columnas flexiblemente
     const mes      = row['MES'] || '';
     const ord      = row['ORD'] || '';
@@ -636,7 +700,10 @@ function renderInbound(data, tbodyId, countId) {
     const obs      = calcObs(row);
     const stockNum = parseFloat(stock) || 0;
     const stockClass = stockNum < 0 ? 'text-error font-bold' : stockNum === 0 ? 'text-on-surface-variant' : 'text-on-surface';
-    html += `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent hover:border-l-primary cursor-pointer">
+    html += `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent hover:border-l-primary cursor-pointer" data-idx="${idx}" data-tab="${prefix}">
+      <td class="px-3 py-3 text-center" onclick="event.stopPropagation()">
+        <input type="checkbox" class="row-checkbox row-check-${prefix}" data-idx="${idx}" onchange="onRowCheck('${prefix}')">
+      </td>
       <td class="px-4 py-3 whitespace-nowrap text-body-sm">${mes}</td>
       <td class="px-4 py-3 whitespace-nowrap font-data-mono text-data-mono">${ord}</td>
       <td class="px-4 py-3 whitespace-nowrap text-body-sm">${ref}</td>
@@ -654,7 +721,13 @@ function renderInbound(data, tbodyId, countId) {
     </tr>`;
   });
   tbody.innerHTML = html;
-  if (countEl) countEl.textContent = `${data.length.toLocaleString('es-PE')} registros`;
+  const label = `${data.length.toLocaleString('es-PE')} registros`;
+  if (countEl) countEl.textContent = label;
+  if (countTopEl) countTopEl.textContent = label;
+  // reset check-all
+  const chkAll = document.getElementById(prefix + '-check-all');
+  if (chkAll) chkAll.checked = false;
+  updateSelBar(prefix);
 }
 
 // ============================================================
@@ -664,13 +737,15 @@ function renderOfertas(data) {
   filteredOF = data; // Guardar para exportar
   const tbody = document.getElementById('tbody-of');
   const countEl = document.getElementById('of-count');
+  const countTopEl = document.getElementById('of-count-top');
   if (!data.length) {
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="13">Sin registros.</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="14">Sin registros.</td></tr>';
     if (countEl) countEl.textContent = '0 registros';
+    if (countTopEl) countTopEl.textContent = '0 registros';
     return;
   }
   let html = '';
-  data.forEach(row => {
+  data.forEach((row, idx) => {
     const mes   = row['MES'] || '';
     const ing   = row['INGRESO'] || '';
     const doc   = row['DOCUMENTO'] || '';
@@ -684,7 +759,10 @@ function renderOfertas(data) {
     const total = row['TOTAL'] || '';
     const stock = row['STOCK'] || '0';
     const obs   = calcObs(row);
-    html += `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent hover:border-l-primary cursor-pointer">
+    html += `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent hover:border-l-primary cursor-pointer" data-idx="${idx}" data-tab="of">
+      <td class="px-3 py-3 text-center" onclick="event.stopPropagation()">
+        <input type="checkbox" class="row-checkbox row-check-of" data-idx="${idx}" onchange="onRowCheck('of')">
+      </td>
       <td class="px-4 py-3 whitespace-nowrap">${mes}</td>
       <td class="px-4 py-3 whitespace-nowrap font-data-mono text-data-mono">${ing}</td>
       <td class="px-4 py-3 whitespace-nowrap font-data-mono text-data-mono">${doc}</td>
@@ -701,7 +779,13 @@ function renderOfertas(data) {
     </tr>`;
   });
   tbody.innerHTML = html;
-  if (countEl) countEl.textContent = `${data.length.toLocaleString('es-PE')} registros`;
+  const label = `${data.length.toLocaleString('es-PE')} registros`;
+  if (countEl) countEl.textContent = label;
+  if (countTopEl) countTopEl.textContent = label;
+  // reset check-all
+  const chkAll = document.getElementById('of-check-all');
+  if (chkAll) chkAll.checked = false;
+  updateSelBar('of');
 }
 
 // ============================================================
@@ -784,8 +868,8 @@ function updateCardInbound(data, titulo, tipoBultos) {
 // ============================================================
 // HELPER: card izquierda para ARMADO DE OFERTAS
 // ============================================================
-function updateCardOfertas() {
-  const data    = dataOF;
+function updateCardOfertas(data) {
+  if (!data) data = filteredOF.length ? filteredOF : dataOF;
   const ofTotal = data.length;
   const ofComp  = data.filter(r => calcObs(r) === 'COMPLETADO').length;
   const ofProc  = data.filter(r => calcObs(r) === 'EN PROCESO').length;
@@ -833,9 +917,9 @@ function updateCardOfertas() {
 // ACTUALIZAR DASHBOARD CARDS — delega según tab activo
 // ============================================================
 function updateDashboard() {
-  if (activeTab === 'importacion')         updateCardInbound(dataIMP, 'IMPORTACIÓN',   'IMP');
-  else if (activeTab === 'compra-local')   updateCardInbound(dataCL,  'COMPRA LOCAL',  'CL');
-  else if (activeTab === 'armado-ofertas') updateCardOfertas();
+  if (activeTab === 'importacion')         updateCardInbound(filteredIMP.length ? filteredIMP : dataIMP, 'IMPORTACIÓN',   'IMP');
+  else if (activeTab === 'compra-local')   updateCardInbound(filteredCL.length  ? filteredCL  : dataCL,  'COMPRA LOCAL',  'CL');
+  else if (activeTab === 'armado-ofertas') updateCardOfertas(filteredOF.length  ? filteredOF  : dataOF);
 }
 
 // ============================================================
@@ -974,6 +1058,7 @@ function applyFiltersOf() {
   if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
   if (obs)  d = d.filter(r => calcObs(r).toLowerCase().includes(obs));
   renderOfertas(d);
+  updateCardOfertas(d);
 }
 function clearFiltersOf() {
   ['of-filter-mes','of-filter-doc','of-filter-prod','of-filter-obs'].forEach(id => {
@@ -981,12 +1066,85 @@ function clearFiltersOf() {
     if (el) el.value = '';
   });
   renderOfertas(dataOF);
+  updateCardOfertas(dataOF);
 }
 
 // ============================================================
 // DATOS FILTRADOS ACTUALMENTE VISIBLES
 // ============================================================
 let filteredIMP = [], filteredCL = [], filteredOF = [];
+
+// ============================================================
+// SELECCIÓN DE FILAS
+// ============================================================
+function onRowCheck(prefix) {
+  updateSelBar(prefix);
+  // Sincronizar "seleccionar todos"
+  const checks = document.querySelectorAll(`.row-check-${prefix}`);
+  const allChecked = [...checks].every(c => c.checked);
+  const anyChecked = [...checks].some(c => c.checked);
+  const chkAll = document.getElementById(prefix + '-check-all');
+  if (chkAll) { chkAll.checked = allChecked; chkAll.indeterminate = !allChecked && anyChecked; }
+  // Resaltar fila
+  checks.forEach(c => {
+    const row = c.closest('tr');
+    if (row) row.classList.toggle('row-selected', c.checked);
+  });
+}
+function toggleSelectAll(prefix, checked) {
+  document.querySelectorAll(`.row-check-${prefix}`).forEach(c => {
+    c.checked = checked;
+    const row = c.closest('tr');
+    if (row) row.classList.toggle('row-selected', checked);
+  });
+  updateSelBar(prefix);
+}
+function updateSelBar(prefix) {
+  const checks = document.querySelectorAll(`.row-check-${prefix}`);
+  const n = [...checks].filter(c => c.checked).length;
+  const bar = document.getElementById(prefix + '-sel-bar');
+  const lbl = document.getElementById(prefix + '-sel-count');
+  if (bar) bar.classList.toggle('visible', n > 0);
+  if (lbl) lbl.textContent = n + ' seleccionado' + (n !== 1 ? 's' : '');
+}
+function clearSelection(prefix) {
+  document.querySelectorAll(`.row-check-${prefix}`).forEach(c => {
+    c.checked = false;
+    const row = c.closest('tr');
+    if (row) row.classList.remove('row-selected');
+  });
+  const chkAll = document.getElementById(prefix + '-check-all');
+  if (chkAll) { chkAll.checked = false; chkAll.indeterminate = false; }
+  updateSelBar(prefix);
+}
+function getSelectedIndices(prefix) {
+  return [...document.querySelectorAll(`.row-check-${prefix}:checked`)].map(c => parseInt(c.dataset.idx));
+}
+function exportSelected(prefix) {
+  const indices = getSelectedIndices(prefix);
+  if (!indices.length) { alert('No hay filas seleccionadas.'); return; }
+  let data, filename;
+  if (prefix === 'imp') { data = filteredIMP; filename = 'importacion_seleccion.xls'; }
+  else if (prefix === 'cl') { data = filteredCL; filename = 'compra_local_seleccion.xls'; }
+  else { data = filteredOF; filename = 'armado_ofertas_seleccion.xls'; }
+  const selected = indices.map(i => data[i]).filter(Boolean);
+  if (!selected.length) { alert('No hay datos para exportar.'); return; }
+  const dataConObs = selected.map(r => ({ ...r, OBSERVACION: calcObs(r) }));
+  const headers = Object.keys(dataConObs[0]);
+  const rows = dataConObs.map(r =>
+    '<tr>' + headers.map(h => `<td>${(r[h]||'').toString().replace(/</g,'&lt;')}</td>`).join('') + '</tr>'
+  ).join('');
+  const xls = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head><meta charset="UTF-8"><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+<x:ExcelWorksheet><x:Name>Selección</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>
+<body><table><thead><tr>${headers.map(h=>'<th>'+h+'</th>').join('')}</tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const blob = new Blob([xls], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 // ============================================================
 // EXPORTAR XLS (datos filtrados)
@@ -1027,9 +1185,9 @@ async function loadAllData() {
 
   // Loading states
   ['tbody-imp','tbody-cl'].forEach(id => {
-    document.getElementById(id).innerHTML = '<tr class="loading-row"><td colspan="14"><span class="material-symbols-outlined spin">sync</span> Cargando desde Google Sheets...</td></tr>';
+    document.getElementById(id).innerHTML = '<tr class="loading-row"><td colspan="15"><span class="material-symbols-outlined spin">sync</span> Cargando desde Google Sheets...</td></tr>';
   });
-  document.getElementById('tbody-of').innerHTML = '<tr class="loading-row"><td colspan="13"><span class="material-symbols-outlined spin">sync</span> Cargando desde Google Sheets...</td></tr>';
+  document.getElementById('tbody-of').innerHTML = '<tr class="loading-row"><td colspan="14"><span class="material-symbols-outlined spin">sync</span> Cargando desde Google Sheets...</td></tr>';
 
   // Cargar cada hoja de forma independiente para que un fallo no bloquee las demás
   const results = await Promise.allSettled([
@@ -1055,14 +1213,14 @@ async function loadAllData() {
       console.error('Error procesando Inbound:', e);
       ['tbody-imp','tbody-cl'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.innerHTML = `<tr class="error-row"><td colspan="14">Error al procesar datos: ${e.message}</td></tr>`;
+        if (el) el.innerHTML = `<tr class="error-row"><td colspan="15">Error al procesar datos: ${e.message}</td></tr>`;
       });
       hayError = true;
     }
   } else {
     ['tbody-imp','tbody-cl'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = `<tr class="error-row"><td colspan="14">Error al cargar hoja Inbound. Verifica que el sheet sea público.</td></tr>`;
+      if (el) el.innerHTML = `<tr class="error-row"><td colspan="15">Error al cargar hoja Inbound. Verifica que el sheet sea público.</td></tr>`;
     });
     hayError = true;
   }
@@ -1077,12 +1235,12 @@ async function loadAllData() {
     } catch(e) {
       console.error('Error procesando Ofertas:', e);
       const el = document.getElementById('tbody-of');
-      if (el) el.innerHTML = `<tr class="error-row"><td colspan="13">Error al procesar datos de ofertas: ${e.message}</td></tr>`;
+      if (el) el.innerHTML = `<tr class="error-row"><td colspan="14">Error al procesar datos de ofertas: ${e.message}</td></tr>`;
       hayError = true;
     }
   } else {
     const el = document.getElementById('tbody-of');
-    if (el) el.innerHTML = `<tr class="error-row"><td colspan="13">Error al cargar hoja Ofertas. Verifica que el sheet sea público.</td></tr>`;
+    if (el) el.innerHTML = `<tr class="error-row"><td colspan="14">Error al cargar hoja Ofertas. Verifica que el sheet sea público.</td></tr>`;
     hayError = true;
   }
 
