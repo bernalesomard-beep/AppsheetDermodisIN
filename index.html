@@ -256,7 +256,7 @@
         </div>
         <div class="flex items-center gap-6 flex-1">
           <div class="relative w-72 h-36 flex-shrink-0 overflow-hidden">
-            <canvas id="donut-canvas" width="288" height="144"></canvas>
+            <canvas id="donut-canvas" width="320" height="160" style="width:100%;max-width:320px;display:block;margin:0 auto;"></canvas>
             <div class="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
               <p class="text-[20px] font-bold text-primary" id="donut-pct">—</p>
             </div>
@@ -266,11 +266,11 @@
               <div class="flex items-center justify-between border-b border-outline-variant/30 pb-2">
                 <div class="flex items-center gap-2">
                   <div class="w-2.5 h-2.5 rounded-full bg-[#01b57e]"></div>
-                  <p class="text-[11px] font-bold text-on-surface-variant uppercase">COMPLETADO</p>
+                  <p class="text-[11px] font-bold text-on-surface-variant uppercase">TRABAJADO</p>
                 </div>
                 <div class="text-right">
-                  <p class="text-[18px] font-bold text-on-surface" id="donut-completado">—</p>
-                  <p class="text-[12px] font-bold text-on-tertiary-container" id="donut-completado-pct">—</p>
+                  <p class="text-[18px] font-bold text-[#01b57e]" id="donut-completado">—</p>
+                  <p class="text-[12px] font-bold text-[#01b57e]" id="donut-completado-pct">—</p>
                 </div>
               </div>
               <div class="hidden" id="donut-proceso-row">
@@ -856,28 +856,31 @@ function updateDashboard() {
 // ============================================================
 // DONUT CANVAS
 // ============================================================
-function drawDonut(comp, proc, pend, total) {
+function drawDonut(trabajado, _proc, pendiente, total) {
   const canvas = document.getElementById('donut-canvas');
   if (!canvas) return;
+  const W = canvas.width, H = canvas.height;
   const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, 288, 144);
-  const cx = 72, cy = 144, r = 60;
+  ctx.clearRect(0, 0, W, H);
 
-  // Arco de fondo gris
+  const cx = W / 2, cy = H, r = H - 8;  // semicírculo centrado, grande
+  const tot = total || 1;
+
+  // Arco fondo gris
   ctx.beginPath();
   ctx.moveTo(cx, cy);
   ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
   ctx.closePath();
-  ctx.fillStyle = '#e0e0e0';
+  ctx.fillStyle = '#e5e7eb';
   ctx.fill();
 
-  // Segmentos de datos (solo completado y pendiente)
+  // TRABAJADO = verde (primero, desde izquierda)
+  // PENDIENTE = amarillo (segundo)
   const segs = [
-    { v: comp, c: '#01b57e' },
-    { v: pend, c: '#EAB308' }
+    { v: trabajado,  c: '#01b57e' },
+    { v: pendiente,  c: '#EAB308' }
   ];
   let start = Math.PI;
-  const tot = total || 1;
   segs.forEach(s => {
     if (s.v <= 0) return;
     const sweep = (s.v / tot) * Math.PI;
@@ -890,11 +893,12 @@ function drawDonut(comp, proc, pend, total) {
     start += sweep;
   });
 
-  // Hueco interior (usa color del fondo de la tarjeta)
-  const bgColor = getComputedStyle(canvas).getPropertyValue('--md-sys-color-surface-container-lowest').trim() || '#ffffff';
+  // Hueco interior
+  const inner = r * 0.62;
   ctx.beginPath();
-  ctx.arc(cx, cy, 40, 0, 2 * Math.PI);
-  ctx.fillStyle = bgColor || '#ffffff';
+  ctx.arc(cx, cy, inner, 0, 2 * Math.PI);
+  ctx.fillStyle = getComputedStyle(document.documentElement)
+    .getPropertyValue('--md-sys-color-surface-container-lowest').trim() || '#ffffff';
   ctx.fill();
 }
 
