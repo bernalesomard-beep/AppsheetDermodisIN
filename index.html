@@ -607,12 +607,13 @@ function statusBadge(obs) {
 // CALCULAR OBSERVACION desde QUANTITY vs STOCK
 // ============================================================
 function calcObs(row) {
-  const qty   = parseFloat(row['QUANTITY']) || 0;
-  const stock = parseFloat(row['STOCK'])    || 0;
-  if (stock < 0)                          return 'ERROR';
-  if (stock === 0)                        return 'COMPLETADO';
-  if (qty > stock && stock !== 0)         return 'EN PROCESO';
-  if (qty === stock)                      return 'PENDIENTE';
+  // Cantidad: usa QUANTITY (inbound) o TOTAL (ofertas)
+  const qty   = parseFloat(row['QUANTITY'] || row['TOTAL']) || 0;
+  const stock = parseFloat(row['STOCK']) || 0;
+  if (stock < 0)               return 'ERROR';
+  if (stock === 0)             return 'COMPLETADO';
+  if (qty > stock)             return 'EN PROCESO';
+  if (qty === stock)           return 'PENDIENTE';
   return 'PENDIENTE';
 }
 
@@ -620,6 +621,9 @@ function calcObs(row) {
 // RENDER TABLA INBOUND (IMP y CL)
 // ============================================================
 function renderInbound(data, tbodyId, countId) {
+  // Guardar referencia a datos filtrados para exportar
+  if (tbodyId === 'tbody-imp') filteredIMP = data;
+  else if (tbodyId === 'tbody-cl') filteredCL = data;
   const tbody = document.getElementById(tbodyId);
   const countEl = document.getElementById(countId);
   if (!data.length) {
@@ -671,6 +675,7 @@ function renderInbound(data, tbodyId, countId) {
 // RENDER TABLA OFERTAS
 // ============================================================
 function renderOfertas(data) {
+  filteredOF = data; // Guardar para exportar
   const tbody = document.getElementById('tbody-of');
   const countEl = document.getElementById('of-count');
   if (!data.length) {
@@ -719,18 +724,30 @@ function renderOfertas(data) {
 let activeTab = 'importacion';
 
 // ============================================================
-// HELPER: calcular bultos y palets de hoja 3 por tipo
+// HELPER: bultos y palets filtrando por documentos visibles en la tabla
 // ============================================================
-function calcBultosPalets(tipoFiltro) {
+function calcBultosPaletsFiltrado(filteredData, tipoFiltro) {
+  // Obtener documentos únicos del dataset filtrado
+  const docsActivos = new Set(filteredData.map(r => (r['DOCUMENTO'] || '').trim().toUpperCase()));
   let bultos = 0, palets = 0;
   dataH3.forEach(r => {
     const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim();
-    const b = parseFloat(r['BULTOS']) || 0;
-    const p = parseFloat(r['PALET'])  || 0;
-    if (tipoFiltro === 'IMP' && (tipo === 'IMPORTACION' || tipo === 'IMPORTACIÓN')) { bultos += b; palets += p; }
-    else if (tipoFiltro === 'CL' && tipo === 'COMPRA LOCAL') { bultos += b; palets += p; }
+    const docH3 = (r['DOC, GUIA'] || r['DOCUMENTO'] || '').trim().toUpperCase();
+    const tipoOk = tipoFiltro === 'IMP'
+      ? (tipo === 'IMPORTACION' || tipo === 'IMPORTACIÓN')
+      : tipo === 'COMPRA LOCAL';
+    // Si hay filtro activo solo sumar los docs que coinciden, si no sumar todo del tipo
+    const docOk = docsActivos.size > 0 ? docsActivos.has(docH3) : true;
+    if (tipoOk && docOk) {
+      bultos += parseFloat(r['BULTOS']) || 0;
+      palets += parseFloat(r['PALET'])  || 0;
+    }
   });
   return { bultos, palets };
+}
+// Alias sin filtro (para compatibilidad)
+function calcBultosPalets(tipoFiltro) {
+  return calcBultosPaletsFiltrado([], tipoFiltro);
 }
 
 // ============================================================
@@ -738,15 +755,13 @@ function calcBultosPalets(tipoFiltro) {
 // ============================================================
 function updateCardInbound(data, titulo, tipoBultos) {
   const total      = data.reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  // Completado: stock === 0
-  const completado = data.filter(r => calcObs(r) === 'COMPLETADO').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  // En proceso: qty > stock && stock !== 0  → trabajado parcial = stock de esas filas
-  const enProceso  = data.filter(r => calcObs(r) === 'EN PROCESO').reduce((s, r) => s + (parseFloat(r['STOCK'])    || 0), 0);
-  // Pendiente: qty === stock (nada trabajado)
-  const pendiente  = data.filter(r => calcObs(r) === 'PENDIENTE').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const trabajado  = completado + enProceso;
+  // TRABAJADO = suma de STOCK de todas las filas (lo que ya ingresó físicamente)
+  const trabajado  = data.reduce((s, r) => s + Math.max(0, parseFloat(r['STOCK']) || 0), 0);
+  // PENDIENTE = lo que falta (total - trabajado)
+  const pendiente  = Math.max(0, total - trabajado);
   const pct        = total > 0 ? Math.round((trabajado / total) * 100) : 0;
-  const { bultos, palets } = calcBultosPalets(tipoBultos);
+  // BULTOS y PALETS vienen del filtro activo sobre dataH3
+  const { bultos, palets } = calcBultosPaletsFiltrado(data, tipoBultos);
 
   document.getElementById('card-metricas-inbound').style.display = '';
   document.getElementById('card-metricas-ofertas').style.display = 'none';
@@ -978,20 +993,38 @@ function clearFiltersOf() {
 }
 
 // ============================================================
-// EXPORTAR CSV
+// DATOS FILTRADOS ACTUALMENTE VISIBLES
+// ============================================================
+let filteredIMP = [], filteredCL = [], filteredOF = [];
+
+// ============================================================
+// EXPORTAR XLS (datos filtrados)
 // ============================================================
 function exportTabCSV(tab) {
   let data, filename;
-  if (tab === 'imp') { data = dataIMP; filename = 'importacion.csv'; }
-  else if (tab === 'cl') { data = dataCL; filename = 'compra_local.csv'; }
-  else { data = dataOF; filename = 'armado_ofertas.csv'; }
+  if (tab === 'imp') { data = filteredIMP.length ? filteredIMP : dataIMP; filename = 'importacion.xls'; }
+  else if (tab === 'cl') { data = filteredCL.length ? filteredCL : dataCL; filename = 'compra_local.xls'; }
+  else { data = filteredOF.length ? filteredOF : dataOF; filename = 'armado_ofertas.xls'; }
   if (!data.length) { alert('No hay datos para exportar.'); return; }
-  const headers = Object.keys(data[0]);
-  const csv = [headers.join(','), ...data.map(r => headers.map(h => `"${(r[h]||'').replace(/"/g,'""')}"`).join(','))].join('\n');
+
+  // Agregar columna OBSERVACION calculada
+  const dataConObs = data.map(r => ({ ...r, OBSERVACION: calcObs(r) }));
+  const headers = Object.keys(dataConObs[0]);
+
+  // Generar XLS (formato HTML table que Excel abre directamente)
+  const rows = dataConObs.map(r =>
+    '<tr>' + headers.map(h => `<td>${(r[h]||'').toString().replace(/</g,'&lt;')}</td>`).join('') + '</tr>'
+  ).join('');
+  const xls = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+<head><meta charset="UTF-8"><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+<x:ExcelWorksheet><x:Name>Datos</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+</x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head>
+<body><table><thead><tr>${headers.map(h=>'<th>'+h+'</th>').join('')}</tr></thead><tbody>${rows}</tbody></table></body></html>`;
+  const blob = new Blob([xls], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
-  a.download = filename;
-  a.click();
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ============================================================
