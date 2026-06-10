@@ -273,15 +273,9 @@
                   <p class="text-[12px] font-bold text-on-tertiary-container" id="donut-completado-pct">—</p>
                 </div>
               </div>
-              <div class="flex items-center justify-between border-b border-outline-variant/30 pb-2">
-                <div class="flex items-center gap-2">
-                  <div class="w-2.5 h-2.5 rounded-full bg-[#465f88]"></div>
-                  <p class="text-[11px] font-bold text-on-surface-variant uppercase">EN PROCESO</p>
-                </div>
-                <div class="text-right">
-                  <p class="text-[18px] font-bold text-on-surface" id="donut-proceso">—</p>
-                  <p class="text-[12px] font-bold text-secondary" id="donut-proceso-pct">—</p>
-                </div>
+              <div class="hidden" id="donut-proceso-row">
+                <p id="donut-proceso" class="hidden">—</p>
+                <p id="donut-proceso-pct" class="hidden"></p>
               </div>
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -605,8 +599,21 @@ function statusBadge(obs) {
   if (v === 'COMPLETADO')    return `<span class="px-2 py-0.5 bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant rounded text-[10px] font-bold uppercase">COMPLETADO</span>`;
   if (v === 'EN PROCESO')    return `<span class="px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded text-[10px] font-bold uppercase">EN PROCESO</span>`;
   if (v === 'PENDIENTE')     return `<span class="px-2 py-0.5 bg-[#EAB308]/20 text-[#854D0E] rounded text-[10px] font-bold uppercase">PENDIENTE</span>`;
-  if (v === 'ERROR VALIDAR') return `<span class="px-2 py-0.5 bg-error-container/20 text-error rounded text-[10px] font-bold uppercase">ERROR VALIDAR</span>`;
+  if (v === 'ERROR')         return `<span class="px-2 py-0.5 bg-error-container/20 text-error rounded text-[10px] font-bold uppercase">ERROR</span>`;
   return `<span class="px-2 py-0.5 bg-surface-container text-on-surface-variant rounded text-[10px] font-bold uppercase">${obs || '—'}</span>`;
+}
+
+// ============================================================
+// CALCULAR OBSERVACION desde QUANTITY vs STOCK
+// ============================================================
+function calcObs(row) {
+  const qty   = parseFloat(row['QUANTITY']) || 0;
+  const stock = parseFloat(row['STOCK'])    || 0;
+  if (stock < 0)                          return 'ERROR';
+  if (stock === 0)                        return 'COMPLETADO';
+  if (qty > stock && stock !== 0)         return 'EN PROCESO';
+  if (qty === stock)                      return 'PENDIENTE';
+  return 'PENDIENTE';
 }
 
 // ============================================================
@@ -636,7 +643,7 @@ function renderInbound(data, tbodyId, countId) {
     const expira   = row['EXPIRA'] || '';
     const qty      = row['QUANTITY'] || '0';
     const stock    = row['STOCK'] || '0';
-    const obs      = row['OBSERVACION'] || '';
+    const obs      = calcObs(row);
     const stockNum = parseFloat(stock) || 0;
     const stockClass = stockNum < 0 ? 'text-error font-bold' : stockNum === 0 ? 'text-on-surface-variant' : 'text-on-surface';
     html += `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent hover:border-l-primary cursor-pointer">
@@ -685,7 +692,7 @@ function renderOfertas(data) {
     const caja  = row['CAJA'] || '';
     const total = row['TOTAL'] || '';
     const stock = row['STOCK'] || '0';
-    const obs   = row['OBSERVACION'] || '';
+    const obs   = calcObs(row);
     html += `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent hover:border-l-primary cursor-pointer">
       <td class="px-4 py-3 whitespace-nowrap">${mes}</td>
       <td class="px-4 py-3 whitespace-nowrap font-data-mono text-data-mono">${ing}</td>
@@ -714,38 +721,15 @@ let activeTab = 'importacion';
 // ============================================================
 // HELPER: calcular bultos y palets de hoja 3 por tipo
 // ============================================================
-function calcBultosPalets(tipoFiltro, dataFiltrada) {
+function calcBultosPalets(tipoFiltro) {
   let bultos = 0, palets = 0;
-  if (dataFiltrada && dataFiltrada.length > 0) {
-    const docsUnicos = new Set(dataFiltrada.map(r => (r['DOCUMENTO'] || '').trim().toLowerCase()).filter(Boolean));
-    const refsUnicas = new Set(dataFiltrada.map(r => (r['REFERENTE'] || '').trim().toLowerCase()).filter(Boolean));
-    dataH3.forEach(r => {
-      const docGuia   = (r['DOC, GUIA']   || '').trim().toLowerCase();
-      const referencia = (r['REFERENCIA'] || '').trim().toLowerCase();
-      const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const b = parseFloat(r['BULTOS']) || 0;
-      const p = parseFloat(r['PALET'])  || 0;
-      const tipoOk = tipoFiltro === 'IMP' ? tipo.includes('IMPORT')
-                   : (tipo.includes('COMPRA') || tipo.includes('LOCAL'));
-      if (!tipoOk) return;
-      // Prioridad 1: cruzar por DOC, GUIA si hay documentos filtrados
-      if (docsUnicos.size > 0 && docGuia && docsUnicos.has(docGuia)) { bultos += b; palets += p; return; }
-      // Prioridad 2: cruzar por REFERENCIA si no hay filtro de documento pero sí de referente
-      if (docsUnicos.size === 0 && refsUnicas.size > 0 && referencia && refsUnicas.has(referencia)) { bultos += b; palets += p; return; }
-      // Sin ningún filtro activo: suma todo por tipo
-      if (docsUnicos.size === 0 && refsUnicas.size === 0) { bultos += b; palets += p; }
-    });
-  } else {
-    dataH3.forEach(r => {
-      const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const b = parseFloat(r['BULTOS']) || 0;
-      const p = parseFloat(r['PALET'])  || 0;
-      if (tipoFiltro === 'IMP' && tipo.includes('IMPORT')) { bultos += b; palets += p; }
-      else if (tipoFiltro === 'CL' && (tipo.includes('COMPRA') || tipo.includes('LOCAL'))) { bultos += b; palets += p; }
-    });
-  }
+  dataH3.forEach(r => {
+    const tipo = (r['TIPO DE INGRESO'] || '').toUpperCase().trim();
+    const b = parseFloat(r['BULTOS']) || 0;
+    const p = parseFloat(r['PALET'])  || 0;
+    if (tipoFiltro === 'IMP' && (tipo === 'IMPORTACION' || tipo === 'IMPORTACIÓN')) { bultos += b; palets += p; }
+    else if (tipoFiltro === 'CL' && tipo === 'COMPRA LOCAL') { bultos += b; palets += p; }
+  });
   return { bultos, palets };
 }
 
@@ -754,12 +738,15 @@ function calcBultosPalets(tipoFiltro, dataFiltrada) {
 // ============================================================
 function updateCardInbound(data, titulo, tipoBultos) {
   const total      = data.reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const completado = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'COMPLETADO').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const proceso    = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'EN PROCESO').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const pendiente  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'PENDIENTE').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
-  const trabajado  = completado + proceso;
+  // Completado: stock === 0
+  const completado = data.filter(r => calcObs(r) === 'COMPLETADO').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
+  // En proceso: qty > stock && stock !== 0  → trabajado parcial = stock de esas filas
+  const enProceso  = data.filter(r => calcObs(r) === 'EN PROCESO').reduce((s, r) => s + (parseFloat(r['STOCK'])    || 0), 0);
+  // Pendiente: qty === stock (nada trabajado)
+  const pendiente  = data.filter(r => calcObs(r) === 'PENDIENTE').reduce((s, r) => s + (parseFloat(r['QUANTITY']) || 0), 0);
+  const trabajado  = completado + enProceso;
   const pct        = total > 0 ? Math.round((trabajado / total) * 100) : 0;
-  const { bultos, palets } = calcBultosPalets(tipoBultos, data);
+  const { bultos, palets } = calcBultosPalets(tipoBultos);
 
   document.getElementById('card-metricas-inbound').style.display = '';
   document.getElementById('card-metricas-ofertas').style.display = 'none';
@@ -785,13 +772,13 @@ function updateCardInbound(data, titulo, tipoBultos) {
 
   document.getElementById('donut-titulo').textContent = 'Distribución — ' + titulo;
   document.getElementById('donut-pct').textContent = pct + '%';
-  document.getElementById('donut-completado').textContent = Math.round(completado).toLocaleString('es-PE');
-  document.getElementById('donut-completado-pct').textContent = total > 0 ? Math.round((completado/total)*100) + '%' : '0%';
-  document.getElementById('donut-proceso').textContent = Math.round(proceso).toLocaleString('es-PE');
-  document.getElementById('donut-proceso-pct').textContent = total > 0 ? Math.round((proceso/total)*100) + '%' : '0%';
+  document.getElementById('donut-completado').textContent = Math.round(trabajado).toLocaleString('es-PE');
+  document.getElementById('donut-completado-pct').textContent = total > 0 ? Math.round((trabajado/total)*100) + '%' : '0%';
+  document.getElementById('donut-proceso').textContent = '—';
+  document.getElementById('donut-proceso-pct').textContent = '';
   document.getElementById('donut-pendiente').textContent = Math.round(pendiente).toLocaleString('es-PE');
   document.getElementById('donut-pendiente-pct').textContent = total > 0 ? Math.round((pendiente/total)*100) + '%' : '0%';
-  drawDonut(completado, proceso, pendiente, total);
+  drawDonut(trabajado, 0, pendiente, total);
 }
 
 // ============================================================
@@ -800,10 +787,10 @@ function updateCardInbound(data, titulo, tipoBultos) {
 function updateCardOfertas() {
   const data    = dataOF;
   const ofTotal = data.length;
-  const ofComp  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'COMPLETADO').length;
-  const ofProc  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'EN PROCESO').length;
-  const ofPend  = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'PENDIENTE').length;
-  const ofErr   = data.filter(r => (r['OBSERVACION'] || '').toUpperCase() === 'ERROR VALIDAR').length;
+  const ofComp  = data.filter(r => calcObs(r) === 'COMPLETADO').length;
+  const ofProc  = data.filter(r => calcObs(r) === 'EN PROCESO').length;
+  const ofPend  = data.filter(r => calcObs(r) === 'PENDIENTE').length;
+  const ofErr   = data.filter(r => calcObs(r) === 'ERROR').length;
   const ofStock = data.reduce((s, r) => s + (parseFloat(r['STOCK']) || 0), 0);
   const meses   = [...new Set(data.map(r => r['MES'] || '').filter(Boolean))];
   const pct     = ofTotal > 0 ? Math.round((ofComp / ofTotal) * 100) : 0;
@@ -859,16 +846,26 @@ function drawDonut(comp, proc, pend, total) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 288, 144);
-  const cx = 72, cy = 144, r = 56;
+  const cx = 72, cy = 144, r = 60;
+
+  // Arco de fondo gris
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI);
+  ctx.closePath();
+  ctx.fillStyle = '#e0e0e0';
+  ctx.fill();
+
+  // Segmentos de datos (solo completado y pendiente)
   const segs = [
     { v: comp, c: '#01b57e' },
-    { v: proc, c: '#465f88' },
     { v: pend, c: '#EAB308' }
   ];
   let start = Math.PI;
+  const tot = total || 1;
   segs.forEach(s => {
     if (s.v <= 0) return;
-    const sweep = (s.v / (total || 1)) * Math.PI;
+    const sweep = (s.v / tot) * Math.PI;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, r, start, start + sweep);
@@ -877,9 +874,12 @@ function drawDonut(comp, proc, pend, total) {
     ctx.fill();
     start += sweep;
   });
+
+  // Hueco interior (usa color del fondo de la tarjeta)
+  const bgColor = getComputedStyle(canvas).getPropertyValue('--md-sys-color-surface-container-lowest').trim() || '#ffffff';
   ctx.beginPath();
-  ctx.arc(cx, cy, 38, 0, 2 * Math.PI);
-  ctx.fillStyle = '#ffffff';
+  ctx.arc(cx, cy, 40, 0, 2 * Math.PI);
+  ctx.fillStyle = bgColor || '#ffffff';
   ctx.fill();
 }
 
@@ -914,7 +914,7 @@ function applyFiltersImp() {
   if (doc)  d = d.filter(r => (r['DOCUMENTO'] || '').toLowerCase().includes(doc));
   if (ref)  d = d.filter(r => (r['REFERENTE'] || '').toLowerCase().includes(ref));
   if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
-  if (obs)  d = d.filter(r => (r['OBSERVACION'] || '').toLowerCase().includes(obs));
+  if (obs)  d = d.filter(r => calcObs(r).toLowerCase().includes(obs));
   renderInbound(d, 'tbody-imp', 'imp-count');
   updateCardInbound(d, 'IMPORTACIÓN', 'IMP');
 }
@@ -941,7 +941,7 @@ function applyFiltersCL() {
   if (doc)  d = d.filter(r => (r['DOCUMENTO'] || '').toLowerCase().includes(doc));
   if (ref)  d = d.filter(r => (r['REFERENTE'] || '').toLowerCase().includes(ref));
   if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
-  if (obs)  d = d.filter(r => (r['OBSERVACION'] || '').toLowerCase().includes(obs));
+  if (obs)  d = d.filter(r => calcObs(r).toLowerCase().includes(obs));
   renderInbound(d, 'tbody-cl', 'cl-count');
   updateCardInbound(d, 'COMPRA LOCAL', 'CL');
 }
@@ -966,7 +966,7 @@ function applyFiltersOf() {
   if (mes)  d = d.filter(r => (r['MES'] || '').toLowerCase().includes(mes));
   if (doc)  d = d.filter(r => (r['DOCUMENTO'] || '').toLowerCase().includes(doc));
   if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
-  if (obs)  d = d.filter(r => (r['OBSERVACION'] || '').toLowerCase().includes(obs));
+  if (obs)  d = d.filter(r => calcObs(r).toLowerCase().includes(obs));
   renderOfertas(d);
 }
 function clearFiltersOf() {
