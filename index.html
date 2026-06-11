@@ -31,6 +31,18 @@
   .month-card .mc-mes { font-size:10px; font-weight:700; text-transform:uppercase; color:#44474e; letter-spacing:.05em; }
   .month-card .mc-val { font-size:18px; font-weight:700; color:#002046; line-height:1.2; margin-top:2px; }
   .month-card .mc-sub { font-size:11px; color:#74777f; margin-top:2px; }
+  /* ── Toast Notifications ── */
+  #toast-container { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+  .toast { display:flex; align-items:center; gap:8px; padding:10px 18px; border-radius:6px; font-size:13px; font-weight:600; color:#fff; box-shadow:0 4px 16px rgba(0,0,0,0.18); opacity:0; transform:translateY(16px); transition:opacity 0.22s,transform 0.22s; pointer-events:auto; min-width:220px; justify-content:center; }
+  .toast.show { opacity:1; transform:translateY(0); }
+  .toast.info    { background:#002046; }
+  .toast.success { background:#005236; }
+  .toast.error   { background:#ba1a1a; }
+  .toast.warn    { background:#7a4100; }
+  /* ── Skeleton Loading ── */
+  @keyframes shimmer { 0%{background-position:-600px 0} 100%{background-position:600px 0} }
+  .sk-cell { height:12px; border-radius:3px; background:linear-gradient(90deg,#e0e3e5 25%,#f2f4f6 50%,#e0e3e5 75%); background-size:800px 100%; animation:shimmer 1.3s infinite; display:block; }
+  .skeleton-row td { padding:10px 16px; }
 </style>
 <script id="tailwind-config">
   tailwind.config = {
@@ -1187,6 +1199,9 @@
   </footer>
 </main>
 
+<!-- Toast container -->
+<div id="toast-container"></div>
+
 <!-- FAB -->
 <button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50">
   <span class="material-symbols-outlined text-[32px]">add_box</span>
@@ -1211,6 +1226,24 @@ let dataIMP = [], dataCL = [], dataOF = [], dataH3 = [];
 let dataAllInbound = []; // todos los inbound sin filtrar por tipo
 let dataRD = [], dataRI = [], dataRM = [], dataPI = [], dataPO = [];
 let filteredRD = [], filteredDI = [], filteredDO = [], filteredRI = [], filteredRM = [], filteredPI = [], filteredPO = [];
+
+// ============================================================
+// TOAST NOTIFICATIONS
+// ============================================================
+function showToast(msg, type = 'info', duration = 2800) {
+  const c = document.getElementById('toast-container');
+  if (!c) return;
+  const t = document.createElement('div');
+  const icons = { info:'info', success:'check_circle', error:'error', warn:'warning' };
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${icons[type]||'info'}</span>${msg}`;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 280);
+  }, duration);
+}
 
 // ============================================================
 // DEBOUNCE — evita re-render en cada tecla
@@ -1260,11 +1293,27 @@ function precacheRows(rows) {
 const CHUNK_SIZE = 200; // filas visibles iniciales
 const _vsState = {}; // estado por tbody: { allRows, rendered }
 
+// ============================================================
+// SKELETON ROWS — muestra animación de carga
+// ============================================================
+function skeletonRows(tbody, cols, n = 8) {
+  const widths = ['40%','60%','30%','70%','50%','45%','55%','35%'];
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    html += '<tr class="skeleton-row">' +
+      Array.from({length: cols}, (_, j) =>
+        `<td><span class="sk-cell" style="width:${widths[(i+j)%widths.length]}"></span></td>`
+      ).join('') + '</tr>';
+  }
+  requestAnimationFrame(() => { tbody.innerHTML = html; });
+}
+
 function renderTbodyAsync(tbody, rowsHtml) {
-  // Modo simple sin virtual scroll (se usa desde renderizadores que ya pasan HTML)
+  // Modo simple sin virtual scroll (tablas secundarias sin rowBuilder)
   requestAnimationFrame(() => { tbody.innerHTML = rowsHtml; });
 }
 
+// renderTbodyVirtual con rowBuilder — universal para todas las tablas
 function renderTbodyVirtual(tbody, rows, rowBuilder) {
   // [OPT-2,3,4] Virtual scroll: solo CHUNK_SIZE filas activas
   const id = tbody.id;
@@ -1908,11 +1957,17 @@ async function loadAllData(forceRefresh = false) {
 
   document.getElementById('refresh-icon').classList.add('spin');
   document.getElementById('last-update-label').textContent = 'Actualizando...';
+  showToast('Cargando datos...', 'info', 2000);
 
-  ['tbody-imp','tbody-cl'].forEach(id => {
-    document.getElementById(id).innerHTML = '<tr class="loading-row"><td colspan="15"><span class="material-symbols-outlined spin">sync</span> Cargando...</td></tr>';
+  // Skeleton en tablas principales mientras cargan
+  const skTargets = [
+    { id:'tbody-imp', cols:15 }, { id:'tbody-cl', cols:15 },
+    { id:'tbody-of',  cols:14 }, { id:'tbody-rd', cols:15 },
+  ];
+  skTargets.forEach(({ id, cols }) => {
+    const el = document.getElementById(id);
+    if (el) skeletonRows(el, cols);
   });
-  document.getElementById('tbody-of').innerHTML = '<tr class="loading-row"><td colspan="14"><span class="material-symbols-outlined spin">sync</span> Cargando...</td></tr>';
 
   let hayError = false;
 
@@ -1935,7 +1990,7 @@ async function loadAllData(forceRefresh = false) {
       setFixedMonthOptions('cl-filter-mes');
       renderInbound(dataIMP, 'tbody-imp', 'imp-count');
       renderInbound(dataCL,  'tbody-cl',  'cl-count');
-      renderDI(dataAllInbound);
+      if (_lazyLoaded.has('det-inbound')) renderDI(dataAllInbound);
       renderMonthGridInbound();
     } catch(e) {
       console.error('Error procesando Inbound:', e);
@@ -1960,7 +2015,7 @@ async function loadAllData(forceRefresh = false) {
       dataOF = precacheRows(toObjects(ofObj.headers, ofObj.rows));
       setFixedMonthOptions('of-filter-mes');
       renderOfertas(dataOF);
-      renderDO(dataOF);
+      if (_lazyLoaded.has('det-ofertas')) renderDO(dataOF);
       renderMonthGridOfertas();
     } catch(e) {
       console.error('Error procesando Ofertas:', e);
@@ -1980,7 +2035,7 @@ async function loadAllData(forceRefresh = false) {
       const h3Obj = parseCSV(r2.value);
       dataH3 = precacheRows(toObjects(h3Obj.headers, h3Obj.rows));
       dataRD = dataH3;
-      renderRD(dataRD);
+      if (_lazyLoaded.has('reg-documentario')) renderRD(dataRD);
       populateSelectFromData(dataRD, 'TIPO DE INGRESO', 'rd-f-tipo');
     } catch(e) { console.warn('Error procesando H3:', e); dataH3 = []; dataRD = []; }
   } else { dataH3 = []; dataRD = []; }
@@ -2004,7 +2059,8 @@ async function loadAllData(forceRefresh = false) {
       const obj = parseCSV(r3.value);
       dataRI = precacheRows(toObjects(obj.headers, obj.rows));
       populateSelectFromData(dataRI, 'ESTATUS', 'ri-f-estatus');
-      renderRI(dataRI);
+      // [LAZY] solo renderiza si ya se visitó la sección
+      if (_lazyLoaded.has('reg-ingresos')) renderRI(dataRI);
     } catch(e) { console.warn('Error procesando Registro Ingresos:', e); dataRI = []; }
   } else { dataRI = []; }
 
@@ -2013,7 +2069,7 @@ async function loadAllData(forceRefresh = false) {
       const obj = parseCSV(r4.value);
       dataRM = precacheRows(toObjects(obj.headers, obj.rows));
       populateSelectFromData(dataRM, 'ESTATUS', 'rm-f-estado');
-      renderRM(dataRM);
+      if (_lazyLoaded.has('reg-movimiento')) renderRM(dataRM);
     } catch(e) { console.warn('Error procesando Registro Movimiento:', e); dataRM = []; }
   } else { dataRM = []; }
 
@@ -2021,7 +2077,7 @@ async function loadAllData(forceRefresh = false) {
     try {
       const obj = parseCSV(r5.value);
       dataPI = precacheRows(toObjects(obj.headers, obj.rows));
-      renderPI(dataPI);
+      if (_lazyLoaded.has('pack-inbound')) renderPI(dataPI);
     } catch(e) { console.warn('Error procesando Packing List Inbound:', e); dataPI = []; }
   } else { dataPI = []; }
 
@@ -2029,7 +2085,7 @@ async function loadAllData(forceRefresh = false) {
     try {
       const obj = parseCSV(r6.value);
       dataPO = precacheRows(toObjects(obj.headers, obj.rows));
-      renderPO(dataPO);
+      if (_lazyLoaded.has('pack-ofertas')) renderPO(dataPO);
     } catch(e) { console.warn('Error procesando Packing List Ofertas:', e); dataPO = []; }
   } else { dataPO = []; }
 
@@ -2037,6 +2093,30 @@ async function loadAllData(forceRefresh = false) {
   const lbl = document.getElementById('last-update-label');
   if (lbl) lbl.textContent = hayError ? 'Actualizado con errores: ' + now2 : 'Actualizado: ' + now2;
   document.getElementById('refresh-icon').classList.remove('spin');
+  if (hayError) showToast('Algunos datos no cargaron correctamente', 'warn', 4000);
+  else showToast('Datos actualizados · ' + now2, 'success', 2500);
+}
+
+// ============================================================
+// LAZY LOAD — secciones secundarias se renderizan al primer acceso
+// ============================================================
+const _lazyLoaded = new Set(['dashboard']); // dashboard ya carga en fase 1
+
+function _lazyRenderSection(id) {
+  if (_lazyLoaded.has(id)) return;
+  _lazyLoaded.add(id);
+  // Renderizar con los datos ya en memoria
+  requestAnimationFrame(() => {
+    try {
+      if (id === 'reg-documentario'  && dataRD.length)          renderRD(dataRD);
+      else if (id === 'det-inbound'  && dataAllInbound.length)  renderDI(dataAllInbound);
+      else if (id === 'det-ofertas'  && dataOF.length)          renderDO(dataOF);
+      else if (id === 'reg-ingresos' && dataRI.length)          renderRI(dataRI);
+      else if (id === 'reg-movimiento' && dataRM.length)        renderRM(dataRM);
+      else if (id === 'pack-inbound' && dataPI.length)          renderPI(dataPI);
+      else if (id === 'pack-ofertas' && dataPO.length)          renderPO(dataPO);
+    } catch(e) { console.warn('Lazy render error:', id, e); }
+  });
 }
 
 // ============================================================
@@ -2058,9 +2138,9 @@ const _sectionTitles = {
 };
 
 function showSection(id) {
-  if (_activeSection === id) return; // ya estamos aquí, no hacer nada
+  if (_activeSection === id) return;
 
-  // Ocultar sección anterior (sin querySelectorAll)
+  // Ocultar sección anterior
   if (_activeSection) {
     const prev = _sections[_activeSection] ||
       (_sections[_activeSection] = document.getElementById('section-' + _activeSection));
@@ -2079,6 +2159,8 @@ function showSection(id) {
     if (lnk) lnk.classList.add('active');
     const titleEl = document.querySelector('header .text-headline-sm.font-bold');
     if (titleEl) titleEl.textContent = _sectionTitles[id] || id;
+    // [LAZY] Primer acceso a la sección → renderizar sus datos
+    _lazyRenderSection(id);
   });
 
   _activeSection = id;
@@ -2219,7 +2301,7 @@ function setFixedMonthOptions(selectId) {
 }
 
 // ============================================================
-// RENDER TABLA — REGISTRO DOCUMENTARIO
+// RENDER TABLA — REGISTRO DOCUMENTARIO (Virtual Scroll)
 // ============================================================
 function renderRD(data) {
   filteredRD = data;
@@ -2228,7 +2310,8 @@ function renderRD(data) {
   document.getElementById('rd-count').textContent = label;
   document.getElementById('rd-count-top').textContent = label;
   if (!data.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="15">Sin registros.</td></tr>'; return; }
-  const html = data.map(r => `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
+  function rowBuilder(r) {
+    return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['REGISTRO']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['REFERENCIA']||''}</td>
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['TICKET']||''}</td>
@@ -2244,22 +2327,26 @@ function renderRD(data) {
     <td class="px-4 py-2 text-right whitespace-nowrap">${r['PALET']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['P. RECEPCION']||r['P.RECEPCION']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['NOM USUARIO']||r['NOM_USUARIO']||''}</td>
-  </tr>`).join('');
-  renderTbodyAsync(tbody, html);
+  </tr>`;
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 function applyFiltersRD() {
-  let d = [...dataRD];
+  // [OPT] Single-loop filter — hasta 5x más rápido que .filter() encadenados
   const ref  = (document.getElementById('rd-f-ref')?.value||'').toLowerCase();
   const tick = (document.getElementById('rd-f-ticket')?.value||'').toLowerCase();
   const tipo = (document.getElementById('rd-f-tipo')?.value||'').toLowerCase();
   const ini  = document.getElementById('rd-f-fecha-ini')?.value||'';
   const fin  = document.getElementById('rd-f-fecha-fin')?.value||'';
   const guia = (document.getElementById('rd-f-guia')?.value||'').toLowerCase();
-  if (ref)  d = d.filter(r => (r['REFERENCIA']||'').toLowerCase().includes(ref));
-  if (tick) d = d.filter(r => (r['TICKET']||'').toLowerCase().includes(tick));
-  if (tipo) d = d.filter(r => (r['TIPO DE INGRESO']||'').toLowerCase().includes(tipo));
-  if (ini||fin) d = d.filter(r => fechaEnRango(r['FECHA']||r['fecha']||'', ini, fin));
-  if (guia) d = d.filter(r => (r['DOC, GUIA']||r['DOC. GUIA']||r['DOC,GUIA']||'').toLowerCase().includes(guia));
+  const d = dataRD.filter(r => {
+    if (ref  && !(r['REFERENCIA']||'').toLowerCase().includes(ref))  return false;
+    if (tick && !(r['TICKET']||'').toLowerCase().includes(tick))     return false;
+    if (tipo && !(r['TIPO DE INGRESO']||'').toLowerCase().includes(tipo)) return false;
+    if ((ini||fin) && !fechaEnRango(r['FECHA']||r['fecha']||'', ini, fin)) return false;
+    if (guia && !(r['DOC, GUIA']||r['DOC. GUIA']||r['DOC,GUIA']||'').toLowerCase().includes(guia)) return false;
+    return true;
+  });
   renderRD(d);
 }
 function clearFiltersRD() {
@@ -2269,7 +2356,7 @@ function clearFiltersRD() {
 }
 
 // ============================================================
-// RENDER TABLA — DETALLE INBOUND
+// RENDER TABLA — DETALLE INBOUND (Virtual Scroll)
 // ============================================================
 function renderDI(data) {
   filteredDI = data;
@@ -2278,7 +2365,8 @@ function renderDI(data) {
   document.getElementById('di-count').textContent = label;
   document.getElementById('di-count-top').textContent = label;
   if (!data.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="15">Sin registros.</td></tr>'; return; }
-  const html = data.map(r => `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
+  function rowBuilder(r) {
+    return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
     <td class="px-4 py-2 whitespace-nowrap font-bold text-[11px]">${r['TIPO']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['MES']||''}</td>
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['ORD']||''}</td>
@@ -2294,21 +2382,24 @@ function renderDI(data) {
     <td class="px-4 py-2 text-right whitespace-nowrap">${r['STOCK']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['CONDICION 2']||''}</td>
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r._fmtFecha||formatFecha(r['REGISTRO']||'')}</td>
-  </tr>`).join('');
-  renderTbodyAsync(tbody, html);
+  </tr>`;
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 function applyFiltersDI() {
-  let d = [...dataAllInbound];
   const tipo = (document.getElementById('di-f-tipo')?.value||'').toUpperCase().trim();
   const mes  = (document.getElementById('di-f-mes')?.value||'').toUpperCase().trim();
   const ref  = (document.getElementById('di-f-ref')?.value||'').toLowerCase();
   const doc  = (document.getElementById('di-f-doc')?.value||'').toLowerCase();
   const cod  = (document.getElementById('di-f-cod')?.value||'').toLowerCase();
-  if (tipo) d = d.filter(r => (r['TIPO']||'').toUpperCase().trim() === tipo);
-  if (mes)  d = d.filter(r => (r['MES']||'').toUpperCase().trim() === mes);
-  if (ref)  d = d.filter(r => (r['REFERENTE']||'').toLowerCase().includes(ref));
-  if (doc)  d = d.filter(r => (r['DOCUMENTO']||'').toLowerCase().includes(doc));
-  if (cod)  d = d.filter(r => (r['CODIGO']||'').toLowerCase().includes(cod));
+  const d = dataAllInbound.filter(r => {
+    if (tipo && (r['TIPO']||'').toUpperCase().trim() !== tipo)                   return false;
+    if (mes  && (r['MES']||'').toUpperCase().trim() !== mes)                     return false;
+    if (ref  && !(r['REFERENTE']||'').toLowerCase().includes(ref))               return false;
+    if (doc  && !(r['DOCUMENTO']||'').toLowerCase().includes(doc))               return false;
+    if (cod  && !(r['CODIGO']||'').toLowerCase().includes(cod))                  return false;
+    return true;
+  });
   renderDI(d);
 }
 function clearFiltersDI() {
@@ -2317,7 +2408,7 @@ function clearFiltersDI() {
 }
 
 // ============================================================
-// RENDER TABLA — DETALLE OFERTAS (sección propia)
+// RENDER TABLA — DETALLE OFERTAS (Virtual Scroll)
 // ============================================================
 function renderDO(data) {
   filteredDO = data;
@@ -2326,7 +2417,8 @@ function renderDO(data) {
   document.getElementById('do-count').textContent = label;
   document.getElementById('do-count-top').textContent = label;
   if (!data.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="13">Sin registros.</td></tr>'; return; }
-  const html = data.map(r => `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
+  function rowBuilder(r) {
+    return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
     <td class="px-4 py-2 whitespace-nowrap">${r['TIPO']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['MES']||''}</td>
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['DOCUMENTO']||''}</td>
@@ -2340,17 +2432,20 @@ function renderDO(data) {
     <td class="px-4 py-2 text-right font-bold whitespace-nowrap">${r['TOTAL']||''}</td>
     <td class="px-4 py-2 text-right whitespace-nowrap">${r['STOCK']||''}</td>
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r._fmtFecha||formatFecha(r['REGISTRO']||'')}</td>
-  </tr>`).join('');
-  renderTbodyAsync(tbody, html);
+  </tr>`;
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 function applyFiltersDO() {
-  let d = [...dataOF];
   const mes = (document.getElementById('do-f-mes')?.value||'').toUpperCase().trim();
   const doc = (document.getElementById('do-f-doc')?.value||'').toLowerCase();
   const cod = (document.getElementById('do-f-cod')?.value||'').toLowerCase();
-  if (mes) d = d.filter(r => (r['MES']||'').toUpperCase().trim() === mes);
-  if (doc) d = d.filter(r => (r['DOCUMENTO']||'').toLowerCase().includes(doc));
-  if (cod) d = d.filter(r => (r['CODIGO']||'').toLowerCase().includes(cod));
+  const d = dataOF.filter(r => {
+    if (mes && (r['MES']||'').toUpperCase().trim() !== mes)         return false;
+    if (doc && !(r['DOCUMENTO']||'').toLowerCase().includes(doc))   return false;
+    if (cod && !(r['CODIGO']||'').toLowerCase().includes(cod))      return false;
+    return true;
+  });
   renderDO(d);
 }
 function clearFiltersDO() {
@@ -2359,7 +2454,7 @@ function clearFiltersDO() {
 }
 
 // ============================================================
-// RENDER TABLA — REGISTRO DE INGRESOS
+// RENDER TABLA — REGISTRO DE INGRESOS (Virtual Scroll)
 // ============================================================
 function renderRI(data) {
   filteredRI = data;
@@ -2368,7 +2463,8 @@ function renderRI(data) {
   document.getElementById('ri-count').textContent = label;
   document.getElementById('ri-count-top').textContent = label;
   if (!data.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="15">Sin registros.</td></tr>'; return; }
-  const html = data.map(r => `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
+  function rowBuilder(r) {
+    return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r._fmtFecha||formatFecha(r['REGISTRO']||'')}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['USUARIO']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['TIPO']||''}</td>
@@ -2384,8 +2480,9 @@ function renderRI(data) {
     <td class="px-4 py-2 whitespace-nowrap">${r['WNRANA']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['WINGDT']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['WTHCMT']||''}</td>
-  </tr>`).join('');
-  renderTbodyAsync(tbody, html);
+  </tr>`;
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 function populateSelectFromData(data, field, selectId) {
   const sel = document.getElementById(selectId);
@@ -2396,7 +2493,6 @@ function populateSelectFromData(data, field, selectId) {
   if (cur) sel.value = cur;
 }
 function applyFiltersRI() {
-  let d = [...dataRI];
   const ini    = document.getElementById('ri-f-ini')?.value||'';
   const fin    = document.getElementById('ri-f-fin')?.value||'';
   const ref    = (document.getElementById('ri-f-ref')?.value||'').toLowerCase();
@@ -2406,14 +2502,17 @@ function applyFiltersRI() {
   const cod    = (document.getElementById('ri-f-cod')?.value||'').toLowerCase();
   const lote   = (document.getElementById('ri-f-lote')?.value||'').toLowerCase();
   const expira = document.getElementById('ri-f-expira')?.value||'';
-  if (ini||fin) d = d.filter(r => fechaEnRango(r['REGISTRO']||'', ini, fin));
-  if (ref)   d = d.filter(r => (r['TIPO']||'').toLowerCase().includes(ref));
-  if (est)   d = d.filter(r => (r['ESTATUS']||'').toLowerCase().includes(est));
-  if (cli)   d = d.filter(r => (r['WCUST']||'').toLowerCase().includes(cli));
-  if (doc)   d = d.filter(r => (r['WDREF']||'').toLowerCase().includes(doc));
-  if (cod)   d = d.filter(r => (r['WITCUS']||'').toLowerCase().includes(cod));
-  if (lote)  d = d.filter(r => (r['WLTCUS']||'').toLowerCase().includes(lote));
-  if (expira)d = d.filter(r => (r['WEXPDT']||'').includes(expira));
+  const d = dataRI.filter(r => {
+    if ((ini||fin) && !fechaEnRango(r['REGISTRO']||'', ini, fin)) return false;
+    if (ref    && !(r['TIPO']||'').toLowerCase().includes(ref))    return false;
+    if (est    && !(r['ESTATUS']||'').toLowerCase().includes(est)) return false;
+    if (cli    && !(r['WCUST']||'').toLowerCase().includes(cli))   return false;
+    if (doc    && !(r['WDREF']||'').toLowerCase().includes(doc))   return false;
+    if (cod    && !(r['WITCUS']||'').toLowerCase().includes(cod))  return false;
+    if (lote   && !(r['WLTCUS']||'').toLowerCase().includes(lote)) return false;
+    if (expira && !(r['WEXPDT']||'').includes(expira))             return false;
+    return true;
+  });
   renderRI(d);
 }
 function clearFiltersRI() {
@@ -2422,7 +2521,7 @@ function clearFiltersRI() {
 }
 
 // ============================================================
-// RENDER TABLA — REGISTRO DE MOVIMIENTO
+// RENDER TABLA — REGISTRO DE MOVIMIENTO (Virtual Scroll)
 // ============================================================
 function renderRM(data) {
   filteredRM = data;
@@ -2431,7 +2530,8 @@ function renderRM(data) {
   document.getElementById('rm-count').textContent = label;
   document.getElementById('rm-count-top').textContent = label;
   if (!data.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="17">Sin registros.</td></tr>'; return; }
-  const html = data.map(r => `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
+  function rowBuilder(r) {
+    return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r._fmtFecha||formatFecha(r['REGISTRO']||'')}</td>
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['REFERENCIA']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['ESTATUS']||''}</td>
@@ -2449,11 +2549,11 @@ function renderRM(data) {
     <td class="px-4 py-2 whitespace-nowrap">${r['RRSNC']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['RNDOC']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['RCOM']||''}</td>
-  </tr>`).join('');
-  renderTbodyAsync(tbody, html);
+  </tr>`;
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 function applyFiltersRM() {
-  let d = [...dataRM];
   const ini  = document.getElementById('rm-f-ini')?.value||'';
   const fin  = document.getElementById('rm-f-fin')?.value||'';
   const doc  = (document.getElementById('rm-f-doc')?.value||'').toLowerCase();
@@ -2465,16 +2565,19 @@ function applyFiltersRM() {
   const cod  = (document.getElementById('rm-f-cod')?.value||'').toLowerCase();
   const uori = (document.getElementById('rm-f-uori')?.value||'').toLowerCase();
   const udes = (document.getElementById('rm-f-udes')?.value||'').toLowerCase();
-  if (ini||fin) d = d.filter(r => fechaEnRango(r['REGISTRO']||'', ini, fin));
-  if (doc)  d = d.filter(r => (r['REFERENCIA']||'').toLowerCase().includes(doc));
-  if (est)  d = d.filter(r => (r['ESTATUS']||'').toLowerCase().includes(est));
-  if (lote) d = d.filter(r => (r['LOTE FISICO']||'').toLowerCase().includes(lote));
-  if (ref)  d = d.filter(r => (r['TIPO']||'').toLowerCase().includes(ref));
-  if (bori) d = d.filter(r => (r['RFRWH']||'').toLowerCase().includes(bori));
-  if (bdes) d = d.filter(r => (r['RTOWH']||'').toLowerCase().includes(bdes));
-  if (cod)  d = d.filter(r => (r['RBPRD']||'').toLowerCase().includes(cod));
-  if (uori) d = d.filter(r => (r['RFRLC']||'').toLowerCase().includes(uori));
-  if (udes) d = d.filter(r => (r['RTOLC']||'').toLowerCase().includes(udes));
+  const d = dataRM.filter(r => {
+    if ((ini||fin) && !fechaEnRango(r['REGISTRO']||'', ini, fin))       return false;
+    if (doc  && !(r['REFERENCIA']||'').toLowerCase().includes(doc))      return false;
+    if (est  && !(r['ESTATUS']||'').toLowerCase().includes(est))         return false;
+    if (lote && !(r['LOTE FISICO']||'').toLowerCase().includes(lote))    return false;
+    if (ref  && !(r['TIPO']||'').toLowerCase().includes(ref))            return false;
+    if (bori && !(r['RFRWH']||'').toLowerCase().includes(bori))          return false;
+    if (bdes && !(r['RTOWH']||'').toLowerCase().includes(bdes))          return false;
+    if (cod  && !(r['RBPRD']||'').toLowerCase().includes(cod))           return false;
+    if (uori && !(r['RFRLC']||'').toLowerCase().includes(uori))          return false;
+    if (udes && !(r['RTOLC']||'').toLowerCase().includes(udes))          return false;
+    return true;
+  });
   renderRM(d);
 }
 function clearFiltersRM() {
@@ -2483,7 +2586,7 @@ function clearFiltersRM() {
 }
 
 // ============================================================
-// RENDER TABLA — PACKING LIST INBOUND
+// RENDER TABLA — PACKING LIST INBOUND (Virtual Scroll)
 // ============================================================
 function renderPI(data) {
   filteredPI = data;
@@ -2492,7 +2595,8 @@ function renderPI(data) {
   document.getElementById('pi-count').textContent = label;
   document.getElementById('pi-count-top').textContent = label;
   if (!data.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="17">Sin registros.</td></tr>'; return; }
-  const html = data.map(r => `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
+  function rowBuilder(r) {
+    return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r._fmtFecha||formatFecha(r['REGISTRO']||'')}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['MATERIAL NUMBER']||r['Material Number']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['REFERENTE']||''}</td>
@@ -2510,11 +2614,11 @@ function renderPI(data) {
     <td class="px-4 py-2 whitespace-nowrap">${r['UBIC.']||r['UBIC']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['BODEGA']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['OBSERVACIONES']||''}</td>
-  </tr>`).join('');
-  renderTbodyAsync(tbody, html);
+  </tr>`;
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 function applyFiltersPI() {
-  let d = [...dataPI];
   const ini  = document.getElementById('pi-f-ini')?.value||'';
   const fin  = document.getElementById('pi-f-fin')?.value||'';
   const ref  = (document.getElementById('pi-f-ref')?.value||'').toLowerCase();
@@ -2522,12 +2626,15 @@ function applyFiltersPI() {
   const ean  = (document.getElementById('pi-f-ean')?.value||'').toLowerCase();
   const lote = (document.getElementById('pi-f-lote')?.value||'').toLowerCase();
   const bod  = (document.getElementById('pi-f-bod')?.value||'').toLowerCase();
-  if (ini||fin) d = d.filter(r => fechaEnRango(r['REGISTRO']||'', ini, fin));
-  if (ref)  d = d.filter(r => (r['REFERENTE']||'').toLowerCase().includes(ref));
-  if (doc)  d = d.filter(r => (r['DOCUMENTO']||'').toLowerCase().includes(doc));
-  if (ean)  d = d.filter(r => (r['COD-EAN']||'').toLowerCase().includes(ean));
-  if (lote) d = d.filter(r => (r['LOTE']||'').toLowerCase().includes(lote));
-  if (bod)  d = d.filter(r => (r['BODEGA']||'').toLowerCase().includes(bod));
+  const d = dataPI.filter(r => {
+    if ((ini||fin) && !fechaEnRango(r['REGISTRO']||'', ini, fin))  return false;
+    if (ref  && !(r['REFERENTE']||'').toLowerCase().includes(ref)) return false;
+    if (doc  && !(r['DOCUMENTO']||'').toLowerCase().includes(doc)) return false;
+    if (ean  && !(r['COD-EAN']||'').toLowerCase().includes(ean))   return false;
+    if (lote && !(r['LOTE']||'').toLowerCase().includes(lote))     return false;
+    if (bod  && !(r['BODEGA']||'').toLowerCase().includes(bod))    return false;
+    return true;
+  });
   renderPI(d);
 }
 function clearFiltersPI() {
@@ -2536,7 +2643,7 @@ function clearFiltersPI() {
 }
 
 // ============================================================
-// RENDER TABLA — PACKING LIST OFERTAS
+// RENDER TABLA — PACKING LIST OFERTAS (Virtual Scroll)
 // ============================================================
 function renderPO(data) {
   filteredPO = data;
@@ -2545,7 +2652,8 @@ function renderPO(data) {
   document.getElementById('po-count').textContent = label;
   document.getElementById('po-count-top').textContent = label;
   if (!data.length) { tbody.innerHTML = '<tr class="loading-row"><td colspan="14">Sin registros.</td></tr>'; return; }
-  const html = data.map(r => `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
+  function rowBuilder(r) {
+    return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r._fmtFecha||formatFecha(r['REGISTRO']||'')}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['NOM_USUARIO']||r['NOM USUARIO']||''}</td>
     <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['DOCUMENTO']||''}</td>
@@ -2560,11 +2668,11 @@ function renderPO(data) {
     <td class="px-4 py-2 text-right font-bold whitespace-nowrap">${r['CANT SOLICITADA']||''}</td>
     <td class="px-4 py-2 text-right whitespace-nowrap">${r['CANTIDAD TRABAJADA']||''}</td>
     <td class="px-4 py-2 whitespace-nowrap">${r['OBSERVACION']||''}</td>
-  </tr>`).join('');
-  renderTbodyAsync(tbody, html);
+  </tr>`;
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 function applyFiltersPO() {
-  let d = [...dataPO];
   const ini   = document.getElementById('po-f-ini')?.value||'';
   const fin   = document.getElementById('po-f-fin')?.value||'';
   const trans = (document.getElementById('po-f-trans')?.value||'').toLowerCase();
@@ -2572,12 +2680,15 @@ function applyFiltersPO() {
   const item  = (document.getElementById('po-f-item')?.value||'').toLowerCase();
   const lote  = (document.getElementById('po-f-lote')?.value||'').toLowerCase();
   const obs   = (document.getElementById('po-f-obs')?.value||'').toLowerCase();
-  if (ini||fin) d = d.filter(r => fechaEnRango(r['REGISTRO']||'', ini, fin));
-  if (trans) d = d.filter(r => (r['TRANSACCION']||'').toLowerCase().includes(trans));
-  if (ot)    d = d.filter(r => (r['OT']||'').toLowerCase().includes(ot));
-  if (item)  d = d.filter(r => (r['Item Number']||'').toLowerCase().includes(item));
-  if (lote)  d = d.filter(r => (r['LOTE']||'').toLowerCase().includes(lote));
-  if (obs)   d = d.filter(r => (r['OBSERVACION']||'').toLowerCase().includes(obs));
+  const d = dataPO.filter(r => {
+    if ((ini||fin) && !fechaEnRango(r['REGISTRO']||'', ini, fin))         return false;
+    if (trans && !(r['TRANSACCION']||'').toLowerCase().includes(trans))   return false;
+    if (ot    && !(r['OT']||'').toLowerCase().includes(ot))               return false;
+    if (item  && !(r['Item Number']||'').toLowerCase().includes(item))    return false;
+    if (lote  && !(r['LOTE']||'').toLowerCase().includes(lote))           return false;
+    if (obs   && !(r['OBSERVACION']||'').toLowerCase().includes(obs))     return false;
+    return true;
+  });
   renderPO(d);
 }
 function clearFiltersPO() {
