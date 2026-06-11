@@ -1718,10 +1718,12 @@ function applyFiltersImp() {
   if (mes)  d = d.filter(r => (r['MES'] || '').toUpperCase().includes(mes));
   if (doc)  d = d.filter(r => r._search ? r._search.includes(doc) : (r['DOCUMENTO'] || '').toLowerCase().includes(doc));
   if (ref)  d = d.filter(r => r._search ? r._search.includes(ref) : (r['REFERENTE'] || '').toLowerCase().includes(ref));
+  // dDash: solo filtros de mes/doc/ref (sin producto ni observacion) → para card resumen y gráfico
+  const dDash = d.slice();
   if (prod) d = d.filter(r => r._search ? r._search.includes(prod) : ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
   if (obs)  d = d.filter(r => calcObs(r).toLowerCase().includes(obs));
   renderInbound(d, 'tbody-imp', 'imp-count');
-  updateCardInbound(d, 'IMPORTACIÓN', 'IMP');
+  updateCardInbound(dDash, 'IMPORTACIÓN', 'IMP');
 }
 function clearFiltersImp() {
   ['imp-filter-mes','imp-filter-doc','imp-filter-ref','imp-filter-prod','imp-filter-obs'].forEach(id => {
@@ -1745,10 +1747,12 @@ function applyFiltersCL() {
   if (mes)  d = d.filter(r => (r['MES'] || '').toLowerCase().includes(mes));
   if (doc)  d = d.filter(r => (r['DOCUMENTO'] || '').toLowerCase().includes(doc));
   if (ref)  d = d.filter(r => (r['REFERENTE'] || '').toLowerCase().includes(ref));
+  // dDash: solo filtros de mes/doc/ref (sin producto ni observacion) → para card resumen y gráfico
+  const dDash = d.slice();
   if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
   if (obs)  d = d.filter(r => calcObs(r).toLowerCase().includes(obs));
   renderInbound(d, 'tbody-cl', 'cl-count');
-  updateCardInbound(d, 'COMPRA LOCAL', 'CL');
+  updateCardInbound(dDash, 'COMPRA LOCAL', 'CL');
 }
 function clearFiltersCL() {
   ['cl-filter-mes','cl-filter-doc','cl-filter-ref','cl-filter-prod','cl-filter-obs'].forEach(id => {
@@ -1770,10 +1774,12 @@ function applyFiltersOf() {
   const obs  = document.getElementById('of-filter-obs')?.value.toLowerCase();
   if (mes)  d = d.filter(r => (r['MES'] || '').toLowerCase().includes(mes));
   if (doc)  d = d.filter(r => (r['DOCUMENTO'] || '').toLowerCase().includes(doc));
+  // dDash: solo filtros de mes/doc (sin producto ni observacion) → para card resumen y gráfico
+  const dDash = d.slice();
   if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
   if (obs)  d = d.filter(r => calcObs(r).toLowerCase().includes(obs));
   renderOfertas(d);
-  updateCardOfertas(d);
+  updateCardOfertas(dDash);
 }
 function clearFiltersOf() {
   ['of-filter-mes','of-filter-doc','of-filter-prod','of-filter-obs'].forEach(id => {
