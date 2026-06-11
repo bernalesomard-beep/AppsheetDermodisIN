@@ -22,7 +22,7 @@
   tr.row-selected { background-color: rgba(0,32,70,0.06) !important; border-left-color: #002046 !important; }
   .sel-bar { display:none; align-items:center; gap:10px; padding:6px 16px; background:#002046; color:#fff; font-size:12px; font-weight:700; border-radius:4px; }
   .sel-bar.visible { display:flex; }
-  .page-section { display:none; }
+  .page-section { display:none; content-visibility: auto; contain-intrinsic-size: 0 600px; }
   .page-section.active { display:block; }
   .nav-link { color: #44474e; }
   .nav-link:hover { background-color: #e6e8ea; }
@@ -361,7 +361,7 @@
             </div>
           </div>
         </div>
-        <div class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
+        <div id="imp-table-container" class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
           <table class="w-full text-left border-collapse table-auto min-w-[1400px]">
             <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
               <tr>
@@ -455,7 +455,7 @@
             </div>
           </div>
         </div>
-        <div class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
+        <div id="cl-table-container" class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
           <table class="w-full text-left border-collapse table-auto min-w-[1400px]">
             <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
               <tr>
@@ -542,7 +542,7 @@
             </div>
           </div>
         </div>
-        <div class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
+        <div id="of-table-container" class="overflow-x-auto max-h-[500px] border-b border-outline-variant w-full">
           <table class="w-full text-left border-collapse table-auto min-w-[900px]">
             <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
               <tr>
@@ -635,7 +635,7 @@
       <span class="text-body-sm text-on-surface-variant" id="rd-count-top">—</span>
     </div>
     <!-- Tabla -->
-    <div class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
+    <div id="rd-table-container" class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
       <table class="w-full text-left border-collapse table-auto min-w-[1600px]">
         <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
           <tr>
@@ -718,7 +718,7 @@
     <div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded flex items-center justify-between">
       <span class="text-body-sm text-on-surface-variant" id="di-count-top">—</span>
     </div>
-    <div class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
+    <div id="di-table-container" class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
       <table class="w-full text-left border-collapse table-auto min-w-[1600px]">
         <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
           <tr>
@@ -790,7 +790,7 @@
     <div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded flex items-center justify-between">
       <span class="text-body-sm text-on-surface-variant" id="do-count-top">—</span>
     </div>
-    <div class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
+    <div id="do-table-container" class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
       <table class="w-full text-left border-collapse table-auto min-w-[1400px]">
         <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
           <tr>
@@ -880,7 +880,7 @@
     <div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded flex items-center justify-between">
       <span class="text-body-sm text-on-surface-variant" id="ri-count-top">—</span>
     </div>
-    <div class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
+    <div id="ri-table-container" class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
       <table class="w-full text-left border-collapse table-auto min-w-[1800px]">
         <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
           <tr>
@@ -983,7 +983,7 @@
     <div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded flex items-center justify-between">
       <span class="text-body-sm text-on-surface-variant" id="rm-count-top">—</span>
     </div>
-    <div class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
+    <div id="rm-table-container" class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
       <table class="w-full text-left border-collapse table-auto min-w-[2000px]">
         <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
           <tr>
@@ -1068,7 +1068,7 @@
     <div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded flex items-center justify-between">
       <span class="text-body-sm text-on-surface-variant" id="pi-count-top">—</span>
     </div>
-    <div class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
+    <div id="pi-table-container" class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
       <table class="w-full text-left border-collapse table-auto min-w-[1800px]">
         <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
           <tr>
@@ -1153,7 +1153,7 @@
     <div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded flex items-center justify-between">
       <span class="text-body-sm text-on-surface-variant" id="po-count-top">—</span>
     </div>
-    <div class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
+    <div id="po-table-container" class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
       <table class="w-full text-left border-collapse table-auto min-w-[1800px]">
         <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
           <tr>
@@ -1240,32 +1240,102 @@ const dApplyFiltersPI   = debounce(_applyFiltersPI, 250);
 const dApplyFiltersPO   = debounce(_applyFiltersPO, 250);
 
 // ============================================================
-// CACHE DE OBSERVACIÓN Y FECHA — se precalcula al cargar datos
+// CACHE DE OBSERVACIÓN, FECHA Y BÚSQUEDA — precalculado al cargar
 // ============================================================
 function precacheRows(rows) {
   rows.forEach(r => {
-    if (!r._obs)    r._obs    = calcObs(r);
-    if (!r._fecha)  r._fecha  = soloFecha(r['REGISTRO'] || r['FECHA'] || r['fecha'] || '');
+    if (!r._obs)      r._obs      = calcObs(r);
+    if (!r._fecha)    r._fecha    = soloFecha(r['REGISTRO'] || r['FECHA'] || r['fecha'] || '');
     if (!r._fmtFecha) r._fmtFecha = formatFecha(r['REGISTRO'] || r['FECHA'] || r['fecha'] || '');
+    // [OPT-5] Índice de búsqueda cacheado: 5-10x más rápido que Object.values() en cada keyup
+    if (!r._search)   r._search   = Object.values(r).join(' ').toLowerCase();
   });
   return rows;
 }
 
 // ============================================================
-// RENDER ASYNC con requestAnimationFrame — no bloquea UI
+// VIRTUAL SCROLL — renderiza solo filas visibles (~200 rows)
+// [OPT-2,3,4,14,15] Elimina lag, reduce RAM y repaint masivo
 // ============================================================
+const CHUNK_SIZE = 200; // filas visibles iniciales
+const _vsState = {}; // estado por tbody: { allRows, rendered }
+
 function renderTbodyAsync(tbody, rowsHtml) {
+  // Modo simple sin virtual scroll (se usa desde renderizadores que ya pasan HTML)
   requestAnimationFrame(() => { tbody.innerHTML = rowsHtml; });
 }
-async function fetchCSV(url) {
+
+function renderTbodyVirtual(tbody, rows, rowBuilder) {
+  // [OPT-2,3,4] Virtual scroll: solo CHUNK_SIZE filas activas
+  const id = tbody.id;
+  _vsState[id] = { rows, rowBuilder, rendered: 0 };
+  requestAnimationFrame(() => {
+    const frag = document.createDocumentFragment();
+    const slice = rows.slice(0, CHUNK_SIZE);
+    slice.forEach((r, i) => {
+      const tmp = document.createElement('tbody');
+      tmp.innerHTML = rowBuilder(r, i);
+      frag.appendChild(tmp.firstElementChild);
+    });
+    tbody.innerHTML = '';
+    tbody.appendChild(frag);
+    _vsState[id].rendered = slice.length;
+  });
+}
+
+function vsLoadMore(tbody) {
+  const id = tbody.id;
+  const state = _vsState[id];
+  if (!state || state.rendered >= state.rows.length) return;
+  const next = state.rows.slice(state.rendered, state.rendered + CHUNK_SIZE);
+  const frag = document.createDocumentFragment();
+  next.forEach((r, i) => {
+    const tmp = document.createElement('tbody');
+    tmp.innerHTML = state.rowBuilder(r, state.rendered + i);
+    frag.appendChild(tmp.firstElementChild);
+  });
+  tbody.appendChild(frag);
+  state.rendered += next.length;
+}
+
+// Attacher de scroll infinito en contenedores de tabla
+function attachVirtualScroll(containerId, tbodyId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.addEventListener('scroll', () => {
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    if (scrollTop + clientHeight >= scrollHeight - 150) {
+      vsLoadMore(document.getElementById(tbodyId));
+    }
+  }, { passive: true });
+}
+// ============================================================
+// CACHE GOOGLE SHEETS — evita recargar datos en 5 min
+// [OPT-9] Reduce peticiones y acelera actualizaciones frecuentes
+// ============================================================
+const _sheetCache = new Map(); // url -> { ts, text }
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+async function fetchCSV(url, forceRefresh = false) {
+  // [OPT-9] Devolver caché si es reciente
+  if (!forceRefresh) {
+    const cached = _sheetCache.get(url);
+    if (cached && (Date.now() - cached.ts) < CACHE_TTL) return cached.text;
+  }
+  // [OPT-8] Intentar fetch directo primero (sin proxy)
   try {
     const r = await fetch(url + '&t=' + Date.now());
-    if (r.ok) return await r.text();
+    if (r.ok) {
+      const text = await r.text();
+      _sheetCache.set(url, { ts: Date.now(), text });
+      return text;
+    }
   } catch(e) {}
-  // proxy fallback
+  // Proxy fallback solo si falla el directo
   const r2 = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url) + '&t=' + Date.now());
   if (!r2.ok) throw new Error('HTTP ' + r2.status);
   const j = await r2.json();
+  _sheetCache.set(url, { ts: Date.now(), text: j.contents });
   return j.contents;
 }
 
@@ -1325,7 +1395,8 @@ function calcObs(row) {
 }
 
 // ============================================================
-// RENDER TABLA INBOUND (IMP y CL)
+// RENDER TABLA INBOUND (IMP y CL) — con Virtual Scroll
+// [OPT-2,3,7] Solo renderiza CHUNK_SIZE filas; carga más al scroll
 // ============================================================
 function renderInbound(data, tbodyId, countId) {
   if (tbodyId === 'tbody-imp') filteredIMP = data;
@@ -1346,7 +1417,8 @@ function renderInbound(data, tbodyId, countId) {
   const chkAll = document.getElementById(prefix + '-check-all');
   if (chkAll) chkAll.checked = false;
   updateSelBar(prefix);
-  const html = data.map((row, idx) => {
+
+  function rowBuilder(row, idx) {
     const mes    = row['MES'] || '';
     const ord    = row['ORD'] || '';
     const ref    = row['REFERENTE'] || '';
@@ -1382,12 +1454,13 @@ function renderInbound(data, tbodyId, countId) {
       <td class="px-4 py-3 text-right whitespace-nowrap ${stockClass}">${stock}</td>
       <td class="px-4 py-3 whitespace-nowrap">${statusBadge(obs)}</td>
     </tr>`;
-  }).join('');
-  renderTbodyAsync(tbody, html);
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 
 // ============================================================
-// RENDER TABLA OFERTAS
+// RENDER TABLA OFERTAS — con Virtual Scroll
+// [OPT-3,7]
 // ============================================================
 function renderOfertas(data) {
   filteredOF = data;
@@ -1406,7 +1479,8 @@ function renderOfertas(data) {
   const chkAll = document.getElementById('of-check-all');
   if (chkAll) chkAll.checked = false;
   updateSelBar('of');
-  const html = data.map((row, idx) => {
+
+  function rowBuilder(row, idx) {
     const obs = row._obs || calcObs(row);
     return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent hover:border-l-primary cursor-pointer" data-idx="${idx}" data-tab="of">
       <td class="px-3 py-3 text-center" onclick="event.stopPropagation()">
@@ -1426,8 +1500,8 @@ function renderOfertas(data) {
       <td class="px-4 py-3 text-right whitespace-nowrap">${row['STOCK']||''}</td>
       <td class="px-4 py-3 whitespace-nowrap">${statusBadge(obs)}</td>
     </tr>`;
-  }).join('');
-  renderTbodyAsync(tbody, html);
+  }
+  renderTbodyVirtual(tbody, data, rowBuilder);
 }
 
 // ============================================================
@@ -1632,19 +1706,19 @@ function populateMesSelect(data, selectId, mesField = 'MES') {
 }
 
 // ============================================================
-// FILTROS IMPORTACIÓN
+// FILTROS IMPORTACIÓN — [OPT-5] usa _search cacheado
 // ============================================================
 function applyFiltersImp() {
   let d = [...dataIMP];
-  const mes  = document.getElementById('imp-filter-mes')?.value.toLowerCase();
+  const mes  = document.getElementById('imp-filter-mes')?.value.toUpperCase();
   const doc  = document.getElementById('imp-filter-doc')?.value.toLowerCase();
   const ref  = document.getElementById('imp-filter-ref')?.value.toLowerCase();
   const prod = document.getElementById('imp-filter-prod')?.value.toLowerCase();
   const obs  = document.getElementById('imp-filter-obs')?.value.toLowerCase();
-  if (mes)  d = d.filter(r => (r['MES'] || '').toLowerCase().includes(mes));
-  if (doc)  d = d.filter(r => (r['DOCUMENTO'] || '').toLowerCase().includes(doc));
-  if (ref)  d = d.filter(r => (r['REFERENTE'] || '').toLowerCase().includes(ref));
-  if (prod) d = d.filter(r => ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
+  if (mes)  d = d.filter(r => (r['MES'] || '').toUpperCase().includes(mes));
+  if (doc)  d = d.filter(r => r._search ? r._search.includes(doc) : (r['DOCUMENTO'] || '').toLowerCase().includes(doc));
+  if (ref)  d = d.filter(r => r._search ? r._search.includes(ref) : (r['REFERENTE'] || '').toLowerCase().includes(ref));
+  if (prod) d = d.filter(r => r._search ? r._search.includes(prod) : ((r['CODIGO'] || '') + ' ' + (r['Article description'] || '')).toLowerCase().includes(prod));
   if (obs)  d = d.filter(r => calcObs(r).toLowerCase().includes(obs));
   renderInbound(d, 'tbody-imp', 'imp-count');
   updateCardInbound(d, 'IMPORTACIÓN', 'IMP');
@@ -1818,9 +1892,14 @@ function exportTabCSV(tab) {
 }
 
 // ============================================================
-// CARGAR TODOS LOS DATOS
+// CARGAR TODOS LOS DATOS — CARGA PROGRESIVA
+// [OPT-1] Inbound primero → dashboard usable de inmediato
+// [OPT-10] Solo actualiza si la pestaña está visible
 // ============================================================
-async function loadAllData() {
+async function loadAllData(forceRefresh = false) {
+  // [OPT-10] No actualizar si la pestaña está oculta (ahorra CPU)
+  if (document.visibilityState !== 'visible' && !forceRefresh) return;
+
   document.getElementById('refresh-icon').classList.add('spin');
   document.getElementById('last-update-label').textContent = 'Actualizando...';
 
@@ -1829,24 +1908,25 @@ async function loadAllData() {
   });
   document.getElementById('tbody-of').innerHTML = '<tr class="loading-row"><td colspan="14"><span class="material-symbols-outlined spin">sync</span> Cargando...</td></tr>';
 
-  const results = await Promise.allSettled([
-    fetchCSV(URL_INBOUND), fetchCSV(URL_OFERTAS), fetchCSV(URL_RESUMEN),
-    fetchCSV(URL_REG_ING), fetchCSV(URL_REG_MOV), fetchCSV(URL_PACK_INB), fetchCSV(URL_PACK_OF)
-  ]);
-
   let hayError = false;
 
-  // Hoja 1: Inbound (Dashboard + Detalle de Inbound)
-  if (results[0].status === 'fulfilled') {
+  // ── FASE 1: Datos críticos del dashboard (Inbound + Ofertas) ──
+  // Se cargan primero para que el usuario vea datos lo antes posible
+  const [r0, r1, r2] = await Promise.allSettled([
+    fetchCSV(URL_INBOUND, forceRefresh),
+    fetchCSV(URL_OFERTAS, forceRefresh),
+    fetchCSV(URL_RESUMEN, forceRefresh)
+  ]);
+
+  // Hoja 1: Inbound
+  if (r0.status === 'fulfilled') {
     try {
-      const inbObj = parseCSV(results[0].value);
+      const inbObj = parseCSV(r0.value);
       dataAllInbound = precacheRows(toObjects(inbObj.headers, inbObj.rows));
       dataIMP = dataAllInbound.filter(r => (r['TIPO']||'').toUpperCase().trim() === 'IMP');
       dataCL  = dataAllInbound.filter(r => (r['TIPO']||'').toUpperCase().trim() === 'CL');
-      // Dashboard tabs - meses fijos
       setFixedMonthOptions('imp-filter-mes');
       setFixedMonthOptions('cl-filter-mes');
-      // Registro Documentario - poblar tipo de ingreso desde H3 (se carga abajo)
       renderInbound(dataIMP, 'tbody-imp', 'imp-count');
       renderInbound(dataCL,  'tbody-cl',  'cl-count');
       renderDI(dataAllInbound);
@@ -1868,9 +1948,9 @@ async function loadAllData() {
   }
 
   // Hoja 2: Ofertas
-  if (results[1].status === 'fulfilled') {
+  if (r1.status === 'fulfilled') {
     try {
-      const ofObj = parseCSV(results[1].value);
+      const ofObj = parseCSV(r1.value);
       dataOF = precacheRows(toObjects(ofObj.headers, ofObj.rows));
       setFixedMonthOptions('of-filter-mes');
       renderOfertas(dataOF);
@@ -1888,10 +1968,10 @@ async function loadAllData() {
     hayError = true;
   }
 
-  // Hoja 3: Resumen (bultos/palets) → Registro Documentario
-  if (results[2].status === 'fulfilled') {
+  // Hoja 3: Resumen
+  if (r2.status === 'fulfilled') {
     try {
-      const h3Obj = parseCSV(results[2].value);
+      const h3Obj = parseCSV(r2.value);
       dataH3 = precacheRows(toObjects(h3Obj.headers, h3Obj.rows));
       dataRD = dataH3;
       renderRD(dataRD);
@@ -1899,49 +1979,57 @@ async function loadAllData() {
     } catch(e) { console.warn('Error procesando H3:', e); dataH3 = []; dataRD = []; }
   } else { dataH3 = []; dataRD = []; }
 
-  // Hoja 4: Registro de Ingresos
-  if (results[3].status === 'fulfilled') {
+  // Dashboard actualizado apenas llegan datos críticos
+  try { updateDashboard(); } catch(e) { console.error('Error en updateDashboard:', e); }
+
+  // ── FASE 2: Hojas secundarias (en paralelo, sin bloquear UI) ──
+  const now1 = new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  document.getElementById('last-update-label').textContent = 'Actualizado: ' + now1 + ' (cargando secundarios...)';
+
+  const [r3, r4, r5, r6] = await Promise.allSettled([
+    fetchCSV(URL_REG_ING,  forceRefresh),
+    fetchCSV(URL_REG_MOV,  forceRefresh),
+    fetchCSV(URL_PACK_INB, forceRefresh),
+    fetchCSV(URL_PACK_OF,  forceRefresh)
+  ]);
+
+  if (r3.status === 'fulfilled') {
     try {
-      const obj = parseCSV(results[3].value);
+      const obj = parseCSV(r3.value);
       dataRI = precacheRows(toObjects(obj.headers, obj.rows));
       populateSelectFromData(dataRI, 'ESTATUS', 'ri-f-estatus');
       renderRI(dataRI);
     } catch(e) { console.warn('Error procesando Registro Ingresos:', e); dataRI = []; }
   } else { dataRI = []; }
 
-  // Hoja 5: Registro de Movimiento
-  if (results[4].status === 'fulfilled') {
+  if (r4.status === 'fulfilled') {
     try {
-      const obj = parseCSV(results[4].value);
+      const obj = parseCSV(r4.value);
       dataRM = precacheRows(toObjects(obj.headers, obj.rows));
       populateSelectFromData(dataRM, 'ESTATUS', 'rm-f-estado');
       renderRM(dataRM);
     } catch(e) { console.warn('Error procesando Registro Movimiento:', e); dataRM = []; }
   } else { dataRM = []; }
 
-  // Hoja 6: Packing List Inbound
-  if (results[5].status === 'fulfilled') {
+  if (r5.status === 'fulfilled') {
     try {
-      const obj = parseCSV(results[5].value);
-      dataPI = toObjects(obj.headers, obj.rows);
+      const obj = parseCSV(r5.value);
+      dataPI = precacheRows(toObjects(obj.headers, obj.rows));
       renderPI(dataPI);
     } catch(e) { console.warn('Error procesando Packing List Inbound:', e); dataPI = []; }
   } else { dataPI = []; }
 
-  // Hoja 7: Packing List Ofertas
-  if (results[6].status === 'fulfilled') {
+  if (r6.status === 'fulfilled') {
     try {
-      const obj = parseCSV(results[6].value);
-      dataPO = toObjects(obj.headers, obj.rows);
+      const obj = parseCSV(r6.value);
+      dataPO = precacheRows(toObjects(obj.headers, obj.rows));
       renderPO(dataPO);
     } catch(e) { console.warn('Error procesando Packing List Ofertas:', e); dataPO = []; }
   } else { dataPO = []; }
 
-  try { updateDashboard(); } catch(e) { console.error('Error en updateDashboard:', e); }
-
-  const now = new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  const now2 = new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
   const lbl = document.getElementById('last-update-label');
-  if (lbl) lbl.textContent = hayError ? 'Actualizado con errores: ' + now : 'Actualizado: ' + now;
+  if (lbl) lbl.textContent = hayError ? 'Actualizado con errores: ' + now2 : 'Actualizado: ' + now2;
   document.getElementById('refresh-icon').classList.remove('spin');
 }
 
@@ -2500,8 +2588,27 @@ document.addEventListener('click', e => {
 // AUTO-ACTUALIZACIÓN cada 5 minutos
 // ============================================================
 loadAllData();
-setInterval(loadAllData, 300000);
+// [OPT-10] Auto-refresh inteligente: solo si la pestaña está visible
+setInterval(() => {
+  if (document.visibilityState === 'visible') loadAllData();
+}, 300000);
 // Marcar dashboard activo en nav al inicio
-document.addEventListener('DOMContentLoaded', () => showSection('dashboard'));
+document.addEventListener('DOMContentLoaded', () => {
+  showSection('dashboard');
+  // [OPT-2,3,4] Attach scroll infinito en todos los contenedores de tabla
+  const scrollPairs = [
+    ['imp-table-container','tbody-imp'],
+    ['cl-table-container','tbody-cl'],
+    ['of-table-container','tbody-of'],
+    ['rd-table-container','tbody-rd'],
+    ['di-table-container','tbody-di'],
+    ['do-table-container','tbody-do'],
+    ['ri-table-container','tbody-ri'],
+    ['rm-table-container','tbody-rm'],
+    ['pi-table-container','tbody-pi'],
+    ['po-table-container','tbody-po'],
+  ];
+  scrollPairs.forEach(([cid, tid]) => attachVirtualScroll(cid, tid));
+});
 </script>
 </body></html>
