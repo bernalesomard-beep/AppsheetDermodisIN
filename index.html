@@ -22,7 +22,7 @@
   tr.row-selected { background-color: rgba(0,32,70,0.06) !important; border-left-color: #002046 !important; }
   .sel-bar { display:none; align-items:center; gap:10px; padding:6px 16px; background:#002046; color:#fff; font-size:12px; font-weight:700; border-radius:4px; }
   .sel-bar.visible { display:flex; }
-  .page-section { display:none; content-visibility: auto; contain-intrinsic-size: 0 600px; }
+  .page-section { display:none; }
   .page-section.active { display:block; }
   .nav-link { color: #44474e; }
   .nav-link:hover { background-color: #e6e8ea; }
@@ -2034,24 +2034,48 @@ async function loadAllData(forceRefresh = false) {
 }
 
 // ============================================================
-// NAVEGACIÓN ENTRE SECCIONES
+// NAVEGACIÓN ENTRE SECCIONES — optimizada
+// [PERF] Cachear referencias DOM, evitar querySelectorAll en cada click
 // ============================================================
+const _sections = {};
+const _navLinks = {};
+let _activeSection = null;
+const _sectionTitles = {
+  'dashboard':        'Dashboard Operativo',
+  'reg-documentario': 'Registro Documentario',
+  'det-inbound':      'Detalle de Inbound',
+  'det-ofertas':      'Detalle Ofertas',
+  'reg-ingresos':     'Registro de Ingresos',
+  'reg-movimiento':   'Registro de Movimiento',
+  'pack-inbound':     'Packing List Inbound',
+  'pack-ofertas':     'Packing List Ofertas'
+};
+
 function showSection(id) {
-  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
-  const sec = document.getElementById('section-' + id);
-  if (sec) sec.classList.add('active');
-  const lnk = document.querySelector(`.nav-link[data-section="${id}"]`);
-  if (lnk) lnk.classList.add('active');
-  // Actualizar header title
-  const titles = {
-    'dashboard': 'Dashboard Operativo', 'reg-documentario': 'Registro Documentario',
-    'det-inbound': 'Detalle de Inbound', 'det-ofertas': 'Detalle Ofertas',
-    'reg-ingresos': 'Registro de Ingresos', 'reg-movimiento': 'Registro de Movimiento',
-    'pack-inbound': 'Packing List Inbound', 'pack-ofertas': 'Packing List Ofertas'
-  };
-  const titleEl = document.querySelector('header .text-headline-sm.font-bold');
-  if (titleEl) titleEl.textContent = titles[id] || id;
+  if (_activeSection === id) return; // ya estamos aquí, no hacer nada
+
+  // Ocultar sección anterior (sin querySelectorAll)
+  if (_activeSection) {
+    const prev = _sections[_activeSection] ||
+      (_sections[_activeSection] = document.getElementById('section-' + _activeSection));
+    if (prev) prev.classList.remove('active');
+    const prevLink = _navLinks[_activeSection] ||
+      (_navLinks[_activeSection] = document.querySelector(`.nav-link[data-section="${_activeSection}"]`));
+    if (prevLink) prevLink.classList.remove('active');
+  }
+
+  // Mostrar nueva sección
+  const sec = _sections[id] || (_sections[id] = document.getElementById('section-' + id));
+  const lnk = _navLinks[id] || (_navLinks[id] = document.querySelector(`.nav-link[data-section="${id}"]`));
+
+  requestAnimationFrame(() => {
+    if (sec) sec.classList.add('active');
+    if (lnk) lnk.classList.add('active');
+    const titleEl = document.querySelector('header .text-headline-sm.font-bold');
+    if (titleEl) titleEl.textContent = _sectionTitles[id] || id;
+  });
+
+  _activeSection = id;
 }
 
 // ============================================================
@@ -2554,33 +2578,60 @@ function clearFiltersPO() {
   ['po-f-ini','po-f-fin','po-f-trans','po-f-ot','po-f-item','po-f-lote','po-f-obs'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   renderPO(dataPO);
 }
-function switchTab(tabId) {
-  activeTab = tabId;
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.classList.remove('border-primary','text-primary','bg-surface-container-lowest','-mb-[1px]');
-    b.classList.add('border-transparent','text-on-surface-variant');
-  });
-  document.getElementById(tabId).classList.add('active');
-  const btn = document.getElementById('btn-' + tabId);
-  btn.classList.add('border-primary','text-primary','bg-surface-container-lowest','-mb-[1px]');
-  btn.classList.remove('border-transparent','text-on-surface-variant');
+// ============================================================
+// SWITCH TAB DASHBOARD — optimizado
+// [PERF] Cachear tabs y botones, eliminar querySelectorAll masivo
+// ============================================================
+const _tabIds = ['importacion', 'compra-local', 'armado-ofertas'];
+const _tabEls = {}; // cache de elementos tab
+const _tabBtns = {}; // cache de botones tab
+let _activeTab = null;
 
-  // Fade suave en las cards de resumen al cambiar tab
-  const summaryCards = document.querySelectorAll('#card-resumen, #card-resumen + div');
-  summaryCards.forEach(c => { c.style.transition = 'opacity 0.15s ease'; c.style.opacity = '0'; });
+function switchTab(tabId) {
+  if (_activeTab === tabId) return;
+  activeTab = tabId;
+
+  // Ocultar tab anterior
+  if (_activeTab) {
+    const prev = _tabEls[_activeTab] || (_tabEls[_activeTab] = document.getElementById(_activeTab));
+    const prevBtn = _tabBtns[_activeTab] || (_tabBtns[_activeTab] = document.getElementById('btn-' + _activeTab));
+    if (prev) prev.classList.remove('active');
+    if (prevBtn) {
+      prevBtn.classList.remove('border-primary','text-primary','bg-surface-container-lowest','-mb-[1px]');
+      prevBtn.classList.add('border-transparent','text-on-surface-variant');
+    }
+  }
+
+  // Mostrar nuevo tab
+  const cur = _tabEls[tabId] || (_tabEls[tabId] = document.getElementById(tabId));
+  const curBtn = _tabBtns[tabId] || (_tabBtns[tabId] = document.getElementById('btn-' + tabId));
+  if (cur) cur.classList.add('active');
+  if (curBtn) {
+    curBtn.classList.add('border-primary','text-primary','bg-surface-container-lowest','-mb-[1px]');
+    curBtn.classList.remove('border-transparent','text-on-surface-variant');
+  }
+  _activeTab = tabId;
+
+  // Fade suave en cards — diferido para no bloquear el cambio visual
+  const card1 = document.getElementById('card-resumen');
+  const card2 = card1?.nextElementSibling;
+  [card1, card2].forEach(c => { if (c) { c.style.transition = 'opacity 0.15s ease'; c.style.opacity = '0'; } });
   setTimeout(() => {
     updateDashboard();
-    summaryCards.forEach(c => { c.style.opacity = '1'; });
-  }, 150);
+    [card1, card2].forEach(c => { if (c) c.style.opacity = '1'; });
+  }, 80); // reducido de 150ms a 80ms
 }
 
-// Row selection micro-interaction
+// Row selection micro-interaction — [PERF] sin querySelectorAll masivo
+let _lastSelectedRow = null;
 document.addEventListener('click', e => {
   const row = e.target.closest('tbody tr');
   if (row) {
-    row.parentElement.querySelectorAll('tr').forEach(r => r.classList.remove('border-l-primary','bg-primary/5'));
+    if (_lastSelectedRow && _lastSelectedRow !== row) {
+      _lastSelectedRow.classList.remove('border-l-primary','bg-primary/5');
+    }
     row.classList.add('border-l-primary','bg-primary/5');
+    _lastSelectedRow = row;
   }
 });
 
