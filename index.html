@@ -127,10 +127,6 @@
       <span class="material-symbols-outlined">package_2</span>
       <span class="text-label-caps font-label-caps">PACKING LIST OFERTAS</span>
     </a>
-    <a class="nav-link flex items-center gap-3 px-4 py-3 rounded transition-all cursor-pointer" data-section="kpi" onclick="showSection('kpi')">
-      <span class="material-symbols-outlined">bar_chart_4_bars</span>
-      <span class="text-label-caps font-label-caps">KPI</span>
-    </a>
   </nav>
   <div class="px-3 pt-4 mt-4 border-t border-outline-variant">
     <button class="w-full flex items-center justify-center gap-2 bg-primary text-on-primary py-3 rounded hover:opacity-90 transition-colors">
@@ -1197,119 +1193,6 @@
     <div class="px-4 py-2 text-body-sm text-on-surface-variant"><span id="po-count">—</span></div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- SECCIÓN: KPI -->
-  <!-- ============================================================ -->
-  <div id="section-kpi" class="page-section p-container-padding space-y-gutter">
-    <div class="flex items-center justify-between mb-2">
-      <div>
-        <h2 class="text-headline-md font-headline-md text-primary">KPI de Ingresos</h2>
-        <p class="text-body-md text-on-surface-variant">Indicadores clave de recepción y cumplimiento.</p>
-      </div>
-      <span id="kpi-update" class="text-body-sm text-on-surface-variant"></span>
-    </div>
-    <!-- Filtros -->
-    <div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-4 flex flex-wrap items-end gap-4">
-      <div class="flex flex-col gap-1 min-w-[130px]">
-        <label class="text-[10px] font-bold text-on-surface-variant uppercase px-1">Mes</label>
-        <select id="kpi-f-mes" onchange="applyFiltersKPI()" class="px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded text-body-sm focus:ring-1 focus:ring-primary outline-none">
-          <option value="">Todos</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1 flex-1 min-w-[150px]">
-        <label class="text-[10px] font-bold text-on-surface-variant uppercase px-1">Negocio</label>
-        <select id="kpi-f-negocio" onchange="applyFiltersKPI()" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded text-body-sm focus:ring-1 focus:ring-primary outline-none">
-          <option value="">Todos</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1 flex-1 min-w-[150px]">
-        <label class="text-[10px] font-bold text-on-surface-variant uppercase px-1">Tipo de Recepción</label>
-        <select id="kpi-f-tipo" onchange="applyFiltersKPI()" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded text-body-sm focus:ring-1 focus:ring-primary outline-none">
-          <option value="">Todos</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1 flex-1 min-w-[150px]">
-        <label class="text-[10px] font-bold text-on-surface-variant uppercase px-1">Status Cumplimiento</label>
-        <select id="kpi-f-status" onchange="applyFiltersKPI()" class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded text-body-sm focus:ring-1 focus:ring-primary outline-none">
-          <option value="">Todos</option>
-        </select>
-      </div>
-      <div class="flex flex-col gap-1 flex-1 min-w-[160px]">
-        <label class="text-[10px] font-bold text-on-surface-variant uppercase px-1">Documento</label>
-        <div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
-          <input id="kpi-f-doc" oninput="dApplyFiltersKPI()" class="w-full pl-9 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded text-body-sm focus:ring-1 focus:ring-primary outline-none" placeholder="Buscar documento..." type="text"></div>
-      </div>
-      <div class="flex flex-col gap-1 flex-1 min-w-[150px]">
-        <label class="text-[10px] font-bold text-on-surface-variant uppercase px-1">Responsable</label>
-        <div class="relative"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
-          <input id="kpi-f-resp" oninput="dApplyFiltersKPI()" class="w-full pl-9 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded text-body-sm focus:ring-1 focus:ring-primary outline-none" placeholder="Buscar responsable..." type="text"></div>
-      </div>
-      <div class="flex flex-col gap-1 min-w-[130px]">
-        <label class="text-[10px] font-bold text-on-surface-variant uppercase px-1">Fecha Desde</label>
-        <input id="kpi-f-ini" type="date" onchange="applyFiltersKPI()" class="px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded text-body-sm focus:ring-1 focus:ring-primary outline-none">
-      </div>
-      <div class="flex flex-col gap-1 min-w-[130px]">
-        <label class="text-[10px] font-bold text-on-surface-variant uppercase px-1">Fecha Hasta</label>
-        <input id="kpi-f-fin" type="date" onchange="applyFiltersKPI()" class="px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded text-body-sm focus:ring-1 focus:ring-primary outline-none">
-      </div>
-      <button onclick="clearFiltersKPI()" class="mb-0.5 px-3 py-2 bg-surface-container-lowest border border-outline text-on-surface-variant rounded hover:bg-surface-container-high transition-all flex items-center gap-1 text-[11px]">
-        <span class="material-symbols-outlined text-[16px]">close</span> Limpiar
-      </button>
-      <button onclick="exportGenericKPI()" class="mb-0.5 px-4 py-2 bg-surface-container-lowest border border-primary text-primary rounded hover:bg-primary/5 transition-all flex items-center gap-2">
-        <span class="material-symbols-outlined text-[20px]">download</span><span class="text-label-caps font-label-caps">EXPORTAR</span>
-      </button>
-    </div>
-    <!-- Contador top -->
-    <div class="px-4 py-2 bg-surface-container-lowest border border-outline-variant rounded flex items-center justify-between">
-      <span class="text-body-sm text-on-surface-variant" id="kpi-count-top">—</span>
-    </div>
-    <!-- Tabla -->
-    <div id="kpi-table-container" class="overflow-x-auto max-h-[600px] border border-outline-variant rounded-lg w-full">
-      <table class="w-full text-left border-collapse table-auto min-w-[4000px]">
-        <thead class="sticky top-0 bg-surface-container-high border-b border-outline-variant z-10">
-          <tr>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">MES</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">NEGOCIO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">DOCUMENTO DE INGRESO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">NÚMERO DE CONTENEDOR</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">NÚMERO DE REFERENCIA</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">NÚMERO GUÍA</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">TIPO DE RECEPCIÓN</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">FECHA DE RECEPCIÓN</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">FECHA DE EMISIÓN DE LA NI</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">LEAD TIME</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">CUMPLIMIENTO DE INGRESO (NI)</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">INDICADOR ÁCIDO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">STATUS DE CUMPLIMIENTO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">RESPONSABLE</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">MOTIVO DE INCUMPLIMIENTO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">CANTIDAD DE RECEPCIONES</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">TIPO PRODUCTO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">SUMA DE UNIDADES</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">CANTIDAD DE BULTOS</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">CANTIDAD DE PALETAS</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">SUMA DE PESO NETO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">SUMA DE VOLUMEN NETO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">ÁREA RESPONSABLE</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">CONCLIENT</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">CONGLOBAL</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap text-right">CONSIGNIA</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">HORA INICIO</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">HORA FINAL</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">LEAD TIME ATENCIÓN</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">PROVEEDOR</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">FACTURABLE DEVOLUCIONES</th>
-            <th class="px-4 py-2 text-[11px] font-bold text-on-surface-variant uppercase whitespace-nowrap">MOTIVO - DEVOLUCIÓN</th>
-          </tr>
-        </thead>
-        <tbody id="tbody-kpi" class="text-body-sm divide-y divide-outline-variant">
-          <tr class="loading-row"><td colspan="32"><span class="material-symbols-outlined spin">sync</span> Cargando...</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="px-4 py-2 text-body-sm text-on-surface-variant"><span id="kpi-count">—</span></div>
-  </div>
-
   <!-- Footer -->
   <footer class="py-8 text-center mt-auto flex-shrink-0">
     <p class="text-body-sm text-on-surface-variant opacity-60">© 2026 LogisticsPro System - Panel Dermodis. Todos los derechos reservados.</p>
@@ -1335,15 +1218,14 @@ const URL_REG_ING   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUJ9Bp8L
 const URL_REG_MOV   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUJ9Bp8LXZep1_v0-HIpcaXyHp5yIkc9E-cVptZzH7fdyFWJjzt7ylyvvE7Ite6NAqX7EJq6n9ikHX/pub?gid=552535923&single=true&output=csv';
 const URL_PACK_INB  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUJ9Bp8LXZep1_v0-HIpcaXyHp5yIkc9E-cVptZzH7fdyFWJjzt7ylyvvE7Ite6NAqX7EJq6n9ikHX/pub?gid=1518657548&single=true&output=csv';
 const URL_PACK_OF   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSUJ9Bp8LXZep1_v0-HIpcaXyHp5yIkc9E-cVptZzH7fdyFWJjzt7ylyvvE7Ite6NAqX7EJq6n9ikHX/pub?gid=1429830042&single=true&output=csv';
-const URL_KPI       = ''; // ← Pegar aquí la URL publicada de la hoja KPI
 
 // ============================================================
 // DATOS EN MEMORIA
 // ============================================================
 let dataIMP = [], dataCL = [], dataOF = [], dataH3 = [];
 let dataAllInbound = []; // todos los inbound sin filtrar por tipo
-let dataRD = [], dataRI = [], dataRM = [], dataPI = [], dataPO = [], dataKPI = [];
-let filteredRD = [], filteredDI = [], filteredDO = [], filteredRI = [], filteredRM = [], filteredPI = [], filteredPO = [], filteredKPI = [];
+let dataRD = [], dataRI = [], dataRM = [], dataPI = [], dataPO = [];
+let filteredRD = [], filteredDI = [], filteredDO = [], filteredRI = [], filteredRM = [], filteredPI = [], filteredPO = [];
 
 // ============================================================
 // TOAST NOTIFICATIONS
@@ -1379,7 +1261,6 @@ const _applyFiltersRI   = () => applyFiltersRI();
 const _applyFiltersRM   = () => applyFiltersRM();
 const _applyFiltersPI   = () => applyFiltersPI();
 const _applyFiltersPO   = () => applyFiltersPO();
-const _applyFiltersKPI  = () => applyFiltersKPI();
 const dApplyFiltersImp  = debounce(_applyFiltersImp, 250);
 const dApplyFiltersCL   = debounce(_applyFiltersCL, 250);
 const dApplyFiltersOf   = debounce(_applyFiltersOf, 250);
@@ -1389,8 +1270,6 @@ const dApplyFiltersDO   = debounce(_applyFiltersDO, 250);
 const dApplyFiltersRI   = debounce(_applyFiltersRI, 250);
 const dApplyFiltersRM   = debounce(_applyFiltersRM, 250);
 const dApplyFiltersPI   = debounce(_applyFiltersPI, 250);
-const _applyFiltersKPI   = () => applyFiltersKPI();
-const dApplyFiltersKPI   = debounce(_applyFiltersKPI, 250);
 const dApplyFiltersPO   = debounce(_applyFiltersPO, 250);
 
 // ============================================================
@@ -2168,12 +2047,11 @@ async function loadAllData(forceRefresh = false) {
   const now1 = new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
   document.getElementById('last-update-label').textContent = 'Actualizado: ' + now1 + ' (cargando secundarios...)';
 
-  const [r3, r4, r5, r6, r7] = await Promise.allSettled([
+  const [r3, r4, r5, r6] = await Promise.allSettled([
     fetchCSV(URL_REG_ING,  forceRefresh),
     fetchCSV(URL_REG_MOV,  forceRefresh),
     fetchCSV(URL_PACK_INB, forceRefresh),
-    fetchCSV(URL_PACK_OF,  forceRefresh),
-    URL_KPI ? fetchCSV(URL_KPI, forceRefresh) : Promise.reject('sin URL KPI')
+    fetchCSV(URL_PACK_OF,  forceRefresh)
   ]);
 
   if (r3.status === 'fulfilled') {
@@ -2211,18 +2089,6 @@ async function loadAllData(forceRefresh = false) {
     } catch(e) { console.warn('Error procesando Packing List Ofertas:', e); dataPO = []; }
   } else { dataPO = []; }
 
-  if (r7.status === 'fulfilled') {
-    try {
-      const obj = parseCSV(r7.value);
-      dataKPI = precacheRows(toObjects(obj.headers, obj.rows));
-      populateSelectFromData(dataKPI, 'MES', 'kpi-f-mes');
-      populateSelectFromData(dataKPI, 'NEGOCIO', 'kpi-f-negocio');
-      populateSelectFromData(dataKPI, 'TIPO DE RECEPCIÓN', 'kpi-f-tipo');
-      populateSelectFromData(dataKPI, 'STATUS DE CUMPLIMIENTO', 'kpi-f-status');
-      if (_lazyLoaded.has('kpi')) renderKPI(dataKPI);
-    } catch(e) { console.warn('Error procesando KPI:', e); dataKPI = []; }
-  } else { dataKPI = []; }
-
   const now2 = new Date().toLocaleTimeString('es-PE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
   const lbl = document.getElementById('last-update-label');
   if (lbl) lbl.textContent = hayError ? 'Actualizado con errores: ' + now2 : 'Actualizado: ' + now2;
@@ -2249,7 +2115,6 @@ function _lazyRenderSection(id) {
       else if (id === 'reg-movimiento' && dataRM.length)        renderRM(dataRM);
       else if (id === 'pack-inbound' && dataPI.length)          renderPI(dataPI);
       else if (id === 'pack-ofertas' && dataPO.length)          renderPO(dataPO);
-      else if (id === 'kpi'          && dataKPI.length)         renderKPI(dataKPI);
     } catch(e) { console.warn('Lazy render error:', id, e); }
   });
 }
@@ -2269,8 +2134,7 @@ const _sectionTitles = {
   'reg-ingresos':     'Registro de Ingresos',
   'reg-movimiento':   'Registro de Movimiento',
   'pack-inbound':     'Packing List Inbound',
-  'pack-ofertas':     'Packing List Ofertas',
-  'kpi':              'KPI de Ingresos'
+  'pack-ofertas':     'Packing List Ofertas'
 };
 
 function showSection(id) {
@@ -2832,110 +2696,6 @@ function clearFiltersPO() {
   renderPO(dataPO);
 }
 // ============================================================
-// RENDER TABLA — KPI (Virtual Scroll)
-// ============================================================
-function renderKPI(data) {
-  filteredKPI = data;
-  const tbody = document.getElementById('tbody-kpi');
-  const label = data.length.toLocaleString('es-PE') + ' registros';
-  const countEl    = document.getElementById('kpi-count');
-  const countTopEl = document.getElementById('kpi-count-top');
-  if (countEl)    countEl.textContent    = label;
-  if (countTopEl) countTopEl.textContent = label;
-  if (!data.length) {
-    if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="32">Sin registros.</td></tr>';
-    return;
-  }
-  function rowBuilder(r) {
-    const statusVal = (r['STATUS DE CUMPLIMIENTO'] || '').toUpperCase().trim();
-    const statusClass = statusVal === 'CUMPLE'      ? 'px-2 py-0.5 bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant rounded text-[10px] font-bold uppercase'
-                      : statusVal === 'NO CUMPLE'   ? 'px-2 py-0.5 bg-error-container/20 text-error rounded text-[10px] font-bold uppercase'
-                      : statusVal === 'EN PROCESO'  ? 'px-2 py-0.5 bg-secondary-container text-on-secondary-container rounded text-[10px] font-bold uppercase'
-                      : 'px-2 py-0.5 bg-surface-container text-on-surface-variant rounded text-[10px] font-bold uppercase';
-    return `<tr class="hover:bg-primary/5 transition-colors border-l-2 border-l-transparent">
-    <td class="px-4 py-2 whitespace-nowrap">${r['MES']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['NEGOCIO']||''}</td>
-    <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['DOCUMENTO DE INGRESO']||''}</td>
-    <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['NÚMERO DE CONTENEDOR']||''}</td>
-    <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['NÚMERO DE REFERENCIA']||''}</td>
-    <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r['NÚMERO GUÍA']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['TIPO DE RECEPCIÓN']||''}</td>
-    <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r._fmtFecha||formatFecha(r['FECHA DE RECEPCIÓN']||'')}</td>
-    <td class="px-4 py-2 font-data-mono text-data-mono whitespace-nowrap">${r._fmtFecha2||formatFecha(r['FECHA DE EMISIÓN DE LA NI']||r['FECHA DE EMISION DE LA NI']||'')}</td>
-    <td class="px-4 py-2 text-right whitespace-nowrap font-data-mono text-data-mono">${r['LEAD TIME']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['CUMPLIMIENTO DE INGRESO (NI)']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['INDICADOR ÁCIDO']||r['INDICADOR ACIDO']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap"><span class="${statusClass}">${r['STATUS DE CUMPLIMIENTO']||'—'}</span></td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['RESPONSABLE']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap max-w-[200px] truncate" title="${r['MOTIVO DE INCUMPLIMIENTO']||''}">${r['MOTIVO DE INCUMPLIMIENTO']||''}</td>
-    <td class="px-4 py-2 text-right font-bold whitespace-nowrap">${r['CANTIDAD DE RECEPCIONES']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['TIPO PRODUCTO']||''}</td>
-    <td class="px-4 py-2 text-right font-bold whitespace-nowrap">${r['SUMA DE UNIDADES']||''}</td>
-    <td class="px-4 py-2 text-right whitespace-nowrap">${r['CANTIDAD DE BULTOS']||''}</td>
-    <td class="px-4 py-2 text-right whitespace-nowrap">${r['CANTIDAD DE PALETAS']||''}</td>
-    <td class="px-4 py-2 text-right whitespace-nowrap">${r['SUMA DE PESO NETO']||''}</td>
-    <td class="px-4 py-2 text-right whitespace-nowrap">${r['SUMA DE VOLUMEN NETO']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['AREA RESPONSABLE']||r['ÁREA RESPONSABLE']||''}</td>
-    <td class="px-4 py-2 text-right whitespace-nowrap font-data-mono text-data-mono">${r['CONCLIENT']||''}</td>
-    <td class="px-4 py-2 text-right whitespace-nowrap font-data-mono text-data-mono">${r['CONGLOBAL']||''}</td>
-    <td class="px-4 py-2 text-right whitespace-nowrap font-data-mono text-data-mono">${r['CONSIGNIA']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['HORA INICIO']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['HORA FINAL']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['LEAD TIME ATENCION']||r['LEAD TIME ATENCIÓN']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['PROVEEDOR']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap">${r['FACTURABLE DEVOLUCIONES']||''}</td>
-    <td class="px-4 py-2 whitespace-nowrap max-w-[200px] truncate" title="${r['MOTIVO - DEVOLUCION']||r['MOTIVO - DEVOLUCIÓN']||''}">${r['MOTIVO - DEVOLUCION']||r['MOTIVO - DEVOLUCIÓN']||''}</td>
-  </tr>`;
-  }
-  renderTbodyVirtual(tbody, data, rowBuilder);
-}
-
-function applyFiltersKPI() {
-  const mes    = (document.getElementById('kpi-f-mes')?.value||'').toLowerCase();
-  const neg    = (document.getElementById('kpi-f-negocio')?.value||'').toLowerCase();
-  const tipo   = (document.getElementById('kpi-f-tipo')?.value||'').toLowerCase();
-  const status = (document.getElementById('kpi-f-status')?.value||'').toLowerCase();
-  const doc    = (document.getElementById('kpi-f-doc')?.value||'').toLowerCase();
-  const resp   = (document.getElementById('kpi-f-resp')?.value||'').toLowerCase();
-  const ini    = document.getElementById('kpi-f-ini')?.value||'';
-  const fin    = document.getElementById('kpi-f-fin')?.value||'';
-  const d = dataKPI.filter(r => {
-    if (mes    && !(r['MES']||'').toLowerCase().includes(mes))                                         return false;
-    if (neg    && !(r['NEGOCIO']||'').toLowerCase().includes(neg))                                     return false;
-    if (tipo   && !(r['TIPO DE RECEPCIÓN']||'').toLowerCase().includes(tipo))                          return false;
-    if (status && !(r['STATUS DE CUMPLIMIENTO']||'').toLowerCase().includes(status))                   return false;
-    if (doc    && !(r['DOCUMENTO DE INGRESO']||'').toLowerCase().includes(doc))                        return false;
-    if (resp   && !(r['RESPONSABLE']||'').toLowerCase().includes(resp))                                return false;
-    if ((ini||fin) && !fechaEnRango(r['FECHA DE RECEPCIÓN']||r['FECHA DE EMISION DE LA NI']||'', ini, fin)) return false;
-    return true;
-  });
-  renderKPI(d);
-}
-
-function clearFiltersKPI() {
-  ['kpi-f-mes','kpi-f-negocio','kpi-f-tipo','kpi-f-status','kpi-f-doc','kpi-f-resp','kpi-f-ini','kpi-f-fin'].forEach(id => {
-    const e = document.getElementById(id); if (e) e.value = '';
-  });
-  renderKPI(dataKPI);
-}
-
-function exportGenericKPI() {
-  const data = filteredKPI.length ? filteredKPI : dataKPI;
-  if (!data.length) { alert('No hay datos KPI para exportar.'); return; }
-  const headers = Object.keys(data[0]).filter(h => !h.startsWith('_'));
-  const rows = data.map(r =>
-    '<tr>' + headers.map(h => `<td>${(r[h]||'').toString().replace(/</g,'&lt;')}</td>`).join('') + '</tr>'
-  ).join('');
-  const xls = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
-<head><meta charset="UTF-8"></head><body><table>
-<thead><tr>${headers.map(h=>'<th>'+h+'</th>').join('')}</tr></thead>
-<tbody>${rows}</tbody></table></body></html>`;
-  const blob = new Blob([xls], { type: 'application/vnd.ms-excel;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'kpi_ingresos.xls'; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-// ============================================================
 // SWITCH TAB DASHBOARD — optimizado
 // [PERF] Cachear tabs y botones, eliminar querySelectorAll masivo
 // ============================================================
@@ -3015,7 +2775,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ['rm-table-container','tbody-rm'],
     ['pi-table-container','tbody-pi'],
     ['po-table-container','tbody-po'],
-    ['kpi-table-container','tbody-kpi'],
   ];
   scrollPairs.forEach(([cid, tid]) => attachVirtualScroll(cid, tid));
 });
